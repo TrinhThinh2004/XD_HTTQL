@@ -1,13 +1,32 @@
 const db = require("../models");
 
-const getAllImportDetails = () => {
-  return db.ImportDetails.findAll({
+const getAllImportDetails = async ({ page, limit, search }) => {
+  const offset = (page - 1) * limit;
+  const where = {};
+
+  if (search) {
+    const { Op } = require("sequelize");
+    // Giả sử search theo tên sản phẩm
+    where["$StockProductData.name$"] = { [Op.like]: `%${search}%` };
+  }
+
+  const { count, rows } = await db.ImportDetails.findAndCountAll({
+    where,
+    limit,
+    offset,
     include: [
       { model: db.ImportReceipts, as: "importReceiptData" },
       { model: db.Stock, as: "StockProductData" },
     ],
     order: [["id", "DESC"]],
   });
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    details: rows,
+  };
 };
 
 const getImportDetailById = async (id) => {

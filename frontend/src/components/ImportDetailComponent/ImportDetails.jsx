@@ -1,199 +1,175 @@
-import React, { useEffect, useState } from "react";
-import { FiEdit, FiTrash2, FiPlus } from "react-icons/fi";
+import React, { useEffect, useState, useMemo } from "react";
 import { toast } from "react-toastify";
 import {
-  // createImportDetail,
   deleteImportDetail,
   getAllImportDetails,
-  // updateImportDetail,
-} from "../../API/importDetailApi/importDetailsApi";
+} from "../../API/importDetailApi/importDetailApi";
 import { useSelector } from "react-redux";
 
-const formatPrice = (price) => {
-  if (!price) return "";
-  return new Intl.NumberFormat("vi-VN").format(price);
-};
+// Common Components
+import Button from '../common/Button';
+import Table from '../common/Table';
+import Card from '../common/Card';
+import ConfirmModal from '../common/ConfirmModal';
+
+import Pagination from "../common/Pagination";
+import Input from "../common/Input";
 
 export default function ImportDetails() {
   const currentUser = useSelector((state) => state.user.currentUser);
-
   const [details, setDetails] = useState([]);
   const [loading, setLoading] = useState(false);
-  // const [form, setForm] = useState({
-  //   importId: "",
-  //   productId: "",
-  //   quantity: "",
-  //   price: "",
-  // });
-  // const [editingId, setEditingId] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const itemsPerPage = 10;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const res = await getAllImportDetails();
-        if (res.data.success) {
-          setDetails(res.data.data || []);
-        } else {
-          setDetails([]);
-          toast.error(res.data.error || "Không lấy được dữ liệu");
-        }
-      } catch (err) {
-        console.error(err);
-        toast.error("Lỗi kết nối server");
-        setDetails([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   if (
-  //     !form.importId ||
-  //     !form.productId ||
-  //     !form.quantity ||
-  //     !form.price ||
-  //     Number(form.importId) <= 0 ||
-  //     Number(form.productId) <= 0 ||
-  //     Number(form.quantity) <= 0 ||
-  //     Number(form.price) <= 0
-  //   ) {
-  //     toast.error("Vui lòng nhập tất cả các trường và khác 0");
-  //     return;
-  //   }
-
-  //   try {
-  //     if (editingId) {
-  //       await updateImportDetail(editingId, form);
-  //       toast.success("Cập nhật thành công");
-  //     } else {
-  //       await createImportDetail(form);
-  //       toast.success("Thêm thành công");
-  //     }
-  //     setForm({ importId: "", productId: "", quantity: "", price: "" });
-  //     setEditingId(null);
-
-  //     const res = await getAllImportDetails();
-  //     if (res.data.success) setDetails(res.data.data || []);
-  //   } catch (e) {
-  //     const message =
-  //       e.response?.data?.error || e.response?.data?.message || e.message;
-  //     if (message.includes("Product")) {
-  //       toast.error("Sản phẩm không tồn tại trong kho!");
-  //     } else {
-  //       toast.error("Phiếu nhập không tồn tại!");
-  //     }
-  //   }
-  // };
-
-  // const handleEdit = (item) => {
-  //   setForm({
-  //     importId: item.importId,
-  //     productId: item.productId,
-  //     quantity: item.quantity,
-  //     price: item.price,
-  //   });
-  //   setEditingId(item.id);
-  //   window.scrollTo({ top: 0, behavior: "smooth" });
-  // };
-
-  const handleDelete = async (id) => {
-    if (currentUser.role !== "admin") {
-      toast.warning("Liên hệ quản lý!");
-      return;
-    }
-    if (!window.confirm("Bạn có chắc muốn xóa?")) return;
+  const fetchData = async (page = currentPage, search = searchQuery) => {
     try {
-      await deleteImportDetail(id);
-      toast.success("Xóa thành công");
-      setDetails(details.filter((d) => d.id !== id));
+      setLoading(true);
+      const res = await getAllImportDetails({
+        page,
+        limit: itemsPerPage,
+        search,
+      });
+      if (res.data.success) {
+        setDetails(res.data.details || []);
+        setTotalPages(res.data.totalPages || 1);
+        setCurrentPage(res.data.currentPage || 1);
+      } else {
+        setDetails([]);
+        toast.error("Không lấy được dữ liệu");
+      }
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message);
+      toast.error("Lỗi kết nối server");
+      setDetails([]);
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setCurrentPage(1);
+    fetchData(1, value);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    fetchData(page, searchQuery);
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteImportDetail(selectedId);
+      toast.success("Xóa thành công");
+      fetchData();
+    } catch (err) {
+      toast.error("Xóa thất bại");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setSelectedId(null);
+    }
+  };
+
+  const columns = [
+    {
+      title: 'Mã phiếu',
+      key: 'importId',
+      className: 'w-24 text-center font-bold text-primary',
+    },
+    {
+      title: 'Sản phẩm',
+      key: 'StockProductData',
+      render: (data) => <span className="font-semibold text-textPrimary">{data?.name || "-"}</span>
+    },
+    {
+      title: 'Số lượng',
+      key: 'quantity',
+      render: (qty, row) => <span className="font-medium">{qty} {row.StockProductData?.unit}</span>
+    },
+    {
+      title: 'Đơn giá',
+      key: 'price',
+      render: (price) => <span>{Number(price).toLocaleString("vi-VN")} VND</span>
+    },
+    {
+      title: 'Thành tiền',
+      key: 'total',
+      render: (_, row) => <span className="font-bold text-primary">{(row.quantity * row.price).toLocaleString("vi-VN")} VND</span>
+    },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      className: 'text-right',
+      render: (_, item) => (
+        <div className="flex justify-end space-x-1">
+          <Button 
+            variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-50 transition-colors"
+            onClick={() => {
+              if (currentUser.role !== "admin") {
+                toast.warning("Chỉ Admin mới có quyền xóa!");
+                return;
+              }
+              setSelectedId(item.id);
+              setIsDeleteModalOpen(true);
+            }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          </Button>
+        </div>
+      )
+    }
+  ];
+
   return (
-    <div className="p-6 bg-blue-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-textPrimary mb-6">
-        Quản lý chi tiết nhập hàng
-      </h1>
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        {loading ? (
-          <div className="text-center py-6 text-[#00BFFF] font-semibold">
-            Đang tải dữ liệu...
-          </div>
-        ) : (
-          <div className="overflow-x-auto rounded-lg border border-gray-200 mb-4">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mã phiếu nhập
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tên sản phẩm
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Số lượng
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Giá (VND)
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Hành động
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {details.length > 0 ? (
-                  details.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-gray-50 transition-colors duration-200"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {item.importId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {item.StockProductData?.name || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {item.quantity}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {formatPrice(item.price)} VND
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                        <div className="flex justify-center space-x-3">
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="p-1 text-red-500 hover:text-red-700 transition-colors"
-                          >
-                            <FiTrash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="5"
-                      className="text-center p-6 text-gray-400 text-base"
-                    >
-                      Không có dữ liệu
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-textPrimary uppercase tracking-wide">
+            Chi tiết các lần nhập hàng
+          </h2>
+        </div>
+        <div className="w-full sm:w-80">
+          <Input
+            placeholder="Tìm kiếm theo tên sản phẩm..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            icon={<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>}
+          />
+        </div>
       </div>
+
+      <Card noPadding>
+        <Table 
+          columns={columns} 
+          data={details} 
+          loading={loading} 
+          emptyMessage="Không có dữ liệu chi tiết nào"
+        />
+        <div className="px-6 pb-6">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      </Card>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa chi tiết"
+        message="Bạn có chắc chắn muốn xóa chi tiết nhập hàng này? Hành động này không thể hoàn tác."
+      />
     </div>
   );
 }

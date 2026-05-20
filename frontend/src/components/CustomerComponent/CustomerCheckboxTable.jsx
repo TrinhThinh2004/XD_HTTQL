@@ -1,5 +1,5 @@
 import React from "react";
-import { FiEdit, FiTrash2 } from "react-icons/fi";
+import { FiTrash2 } from "react-icons/fi";
 
 export default function CustomerCheckboxTable({
   customers,
@@ -91,13 +91,26 @@ export default function CustomerCheckboxTable({
                   <td className="border-t border-border p-2 flex gap-2">
                     <button
                       onClick={() => handleEdit(c)}
-                      className="flex items-center gap-1 gradient-bg text-white px-3 py-1 rounded-lg shadow transition hover:opacity-90"
+                      className="flex items-center gap-1.5 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg font-medium transition-all hover:bg-blue-100 hover:text-blue-700 active:scale-95 border border-blue-200"
                     >
-                      <FiEdit /> Sửa
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      Sửa
                     </button>
                     <button
                       onClick={() => handleDeleteMultiple([c.id])}
-                      className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg shadow transition"
+                      className="flex items-center gap-1 bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded-lg shadow transition"
                     >
                       <FiTrash2 /> Xóa
                     </button>

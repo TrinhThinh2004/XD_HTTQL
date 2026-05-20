@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createProduct } from "../../API/products/productsApi";
+import { getManySupplier } from "../../API/suppliersApi/suppliersApi";
 import { toast } from "react-toastify";
 import upload_area from "../../assets/assets";
 import { useNavigate } from "react-router";
@@ -12,10 +13,24 @@ const CreateProduct = () => {
   const [unit, setUnit] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("Còn hàng");
+  const [supplierId, setSupplierId] = useState("");
+  const [suppliers, setSuppliers] = useState([]);
   const [adding, setAdding] = useState(false);
   const [preview, setPreview] = useState(null);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        const data = await getManySupplier();
+        setSuppliers(data);
+      } catch (error) {
+        console.error("Error fetching suppliers:", error);
+      }
+    };
+    fetchSuppliers();
+  }, []);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -54,6 +69,7 @@ const CreateProduct = () => {
       formData.append("price", String(price));
       formData.append("status", status);
       formData.append("image", image);
+      formData.append("supplierId", supplierId);
 
       const data = await createProduct(formData);
 
@@ -178,6 +194,24 @@ const CreateProduct = () => {
             >
               <option value="Còn hàng">Còn hàng</option>
               <option value="Hết hàng">Hết hàng</option>
+            </select>
+          </div>
+
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nhà cung cấp (Gán mặc định)
+            </label>
+            <select
+              value={supplierId}
+              onChange={(e) => setSupplierId(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">-- Chọn nhà cung cấp --</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
             </select>
           </div>
 

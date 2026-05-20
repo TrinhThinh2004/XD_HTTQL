@@ -1,24 +1,22 @@
-import axios from "axios";
+import axiosInstance from "../utils/axiosInstance";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-export const fetchExportReceipts = () => {
-  return axios.get(`${API_URL}/api/v1/export-receipt/get-all`);
+export const fetchExportReceipts = (params) => {
+  return axiosInstance.get(`/export-receipt/get-all`, { params });
 };
 const fetchExportReceiptById = (id) => {
-  return axios.get(`${API_URL}/api/v1/export-receipt/get/${id}`);
+  return axiosInstance.get(`/export-receipt/get/${id}`);
 };
 
 const createExportReceipt = (data) => {
-  return axios.post(`${API_URL}/api/v1/export-receipt/create`, data);
+  return axiosInstance.post(`/export-receipt/create`, data);
 };
 
 const updateExportReceipt = (id, data) => {
-  return axios.put(`${API_URL}/api/v1/export-receipt/update/${id}`, data);
+  return axiosInstance.put(`/export-receipt/update/${id}`, data);
 };
 
 const deleteExportReceipt = (id) => {
-  return axios.delete(`${API_URL}/api/v1/export-receipt/remove/${id}`);
+  return axiosInstance.delete(`/export-receipt/remove/${id}`);
 };
 
 export {

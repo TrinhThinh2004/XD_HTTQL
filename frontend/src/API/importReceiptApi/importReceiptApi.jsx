@@ -1,38 +1,36 @@
-import axios from "axios";
+import axiosInstance from "../utils/axiosInstance";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-const getAllImportReceipts = async () => {
-  const response = await axios.get(`${API_URL}/api/v1/import-receipt/get-all`);
+const getAllImportReceipts = async (params) => {
+  const response = await axiosInstance.get(`/import-receipt/get-all`, { params });
   return response.data;
 };
 
 const getImportReceiptById = async (id) => {
-  const response = await axios.get(
-    `${API_URL}/api/v1/import-receipt/get-by/${id}`
+  const response = await axiosInstance.get(
+    `/import-receipt/get-by/${id}`
   );
   return response.data;
 };
 
 const createImportReceipt = async (data) => {
-  const response = await axios.post(
-    `${API_URL}/api/v1/import-receipt/create`,
+  const response = await axiosInstance.post(
+    `/import-receipt/create`,
     data
   );
   return response.data;
 };
 
 const updateImportReceipt = async (id, data) => {
-  const response = await axios.put(
-    `${API_URL}/api/v1/import-receipt/update/${id}`,
+  const response = await axiosInstance.put(
+    `/import-receipt/update/${id}`,
     data
   );
   return response.data;
 };
 
 const deleteImportReceipt = async (id) => {
-  const response = await axios.delete(
-    `${API_URL}/api/v1/import-receipt/remove/${id}`
+  const response = await axiosInstance.delete(
+    `/import-receipt/remove/${id}`
   );
   return response.data;
 };

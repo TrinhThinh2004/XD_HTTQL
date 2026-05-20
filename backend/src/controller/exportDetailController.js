@@ -2,8 +2,16 @@ const exportDetailService = require("../services/exportDetailService");
 
 const getAll = async (req, res) => {
   try {
-    const details = await exportDetailService.getAllExportDetails();
-    res.status(200).json({ success: true, data: details });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
+
+    const result = await exportDetailService.getAllExportDetails({
+      page,
+      limit,
+      search,
+    });
+    res.status(200).json({ success: true, ...result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

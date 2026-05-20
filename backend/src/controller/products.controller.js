@@ -75,7 +75,9 @@ module.exports.createProduct = async (req, res) => {
       unit,
       stock,
       price,
-      status
+      status,
+      minStock,
+      supplierId
     } = req.body;
 
     let imageUrl = '';
@@ -98,7 +100,9 @@ module.exports.createProduct = async (req, res) => {
       stock,
       price,
       status: stock === 0 ? 'Còn hàng' : 'Hết hàng',
-      image: imageUrl
+      image: imageUrl,
+      minStock: minStock || 10,
+      supplierId: supplierId || null
     });
 
     res.json({
@@ -125,7 +129,9 @@ module.exports.editProduct = async (req, res) => {
       category,
       description,
       price,
-      status
+      status,
+      minStock,
+      supplierId
     } = req.body
 
     let imageUrl = '';
@@ -148,7 +154,9 @@ module.exports.editProduct = async (req, res) => {
       category,
       description,
       price,
-      status
+      status,
+      minStock,
+      supplierId: supplierId !== undefined ? (supplierId === "" ? null : supplierId) : product.supplierId
     };
 
     if (req.file) {

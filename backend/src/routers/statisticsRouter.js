@@ -7,6 +7,7 @@ router.get('/general', statisticsController.getGeneralStats);
 router.get('/revenue-by-period', statisticsController.getRevenueByPeriod);
 router.get('/top-products', statisticsController.getTopSellingProducts);
 router.get('/order-status-stats', statisticsController.getOrderStatusStats);
+router.get('/deadstock', statisticsController.getDeadstockReport);
 router.get('/all-orders', statisticsController.getAllOrders);
 router.get('/all-stock', statisticsController.getAllStock);
 router.get('/all-customers', statisticsController.getAllCustomers);

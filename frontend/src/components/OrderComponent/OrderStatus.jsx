@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   updateOrder,
   findNearestShipper,
@@ -7,6 +7,7 @@ import {
 import { updateShipperStatus } from "../../API/shipper/shipperApi";
 import OrderDetail from "./OrderDetail";
 import { toast } from "react-toastify";
+import ConfirmModal from "../common/ConfirmModal";
 
 const WAREHOUSE_LAT = 10.8657;
 const WAREHOUSE_LNG = 106.619;
@@ -39,25 +40,29 @@ const ORDER_STATUS = {
 const OrderStatus = ({ orders, loading, onOrderChanged }) => {
   const [filter, setFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState(null);
 
-  const handleCancelOrder = async (order) => {
-    if (!window.confirm("Bạn có chắc muốn hủy đơn này?")) return;
+  const handleCancelOrder = async () => {
     try {
-      if (order.shipperId) {
-        await updateShipperStatus(order.shipperId, {
+      if (orderToCancel.shipperId) {
+        await updateShipperStatus(orderToCancel.shipperId, {
           status: "available",
           currentOrderId: null,
-          address: order.shippingAddress,
-          lat: order.shippingLat,
-          lng: order.shippingLng,
+          address: orderToCancel.shippingAddress,
+          lat: orderToCancel.shippingLat,
+          lng: orderToCancel.shippingLng,
         });
       }
-      await deleteOrder(order.id);
+      await deleteOrder(orderToCancel.id);
       if (onOrderChanged) onOrderChanged();
-      toast.success("Đã hủy đơn hàng #" + order.orderNumber);
+      toast.success("Đã hủy đơn hàng #" + orderToCancel.orderNumber);
     } catch (error) {
       console.error("Error cancelling order:", error);
       toast.error("Có lỗi khi hủy đơn hàng");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setOrderToCancel(null);
     }
   };
 
@@ -169,7 +174,7 @@ const OrderStatus = ({ orders, loading, onOrderChanged }) => {
         {order.status === "pending" && (
           <button
             onClick={() => handleFindShipper(order)}
-            className="px-4 py-1.5 gradient-bg rounded-lg text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+            className="px-4 py-1.5 bg-blue-600 rounded-lg text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
           >
             Tìm shipper
           </button>
@@ -177,15 +182,18 @@ const OrderStatus = ({ orders, loading, onOrderChanged }) => {
         {order.status === "shipping" && (
           <button
             onClick={() => handleConfirmDelivery(order)}
-            className="px-4 py-1.5 bg-green-600 rounded-lg text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+            className="px-4 py-1.5 bg-green-600 rounded-lg text-sm font-semibold text-white hover:bg-green-700 transition-colors"
           >
             Xác nhận giao hàng
           </button>
         )}
         {canCancel && (
           <button
-            onClick={() => handleCancelOrder(order)}
-            className="px-4 py-1.5 bg-red-500 rounded-lg text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+            onClick={() => {
+              setOrderToCancel(order);
+              setIsDeleteModalOpen(true);
+            }}
+            className="px-4 py-1.5 bg-rose-600 rounded-lg text-sm font-semibold text-white hover:bg-rose-700 transition-colors"
           >
             Hủy đơn
           </button>
@@ -339,7 +347,7 @@ const OrderStatus = ({ orders, loading, onOrderChanged }) => {
 
                   <div className="flex justify-end space-x-3 mt-4 pt-4 border-t border-border">
                     <button
-                      className="px-4 py-1.5 border border-primary rounded-lg text-sm text-primary hover:bg-primary/5 transition-colors"
+                      className="px-4 py-1.5 border border-blue-600 rounded-lg text-sm text-blue-600 hover:bg-blue-50 transition-colors"
                       onClick={() => setSelectedOrder(order)}
                     >
                       Xem chi tiết
@@ -358,6 +366,15 @@ const OrderStatus = ({ orders, loading, onOrderChanged }) => {
           />
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleCancelOrder}
+        title="Xác nhận hủy đơn hàng"
+        message={`Bạn có chắc chắn muốn hủy đơn hàng #${orderToCancel?.orderNumber}?`}
+        confirmText="Hủy đơn"
+      />
     </div>
   );
 };

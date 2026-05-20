@@ -117,4 +117,26 @@ module.exports = {
         .json({ message: "Lỗi server", error: err.message });
     }
   },
+
+  getLowStockItems: async (req, res) => {
+    try {
+      const lowStockItems = await db.Stock.findAll({
+        where: {
+          deleted: false,
+          stock: {
+            [Op.lte]: db.sequelize.col("Stock.minStock"),
+          },
+        },
+        include: [
+          { model: db.Product, as: "product", attributes: ["id", "name"] },
+        ],
+      });
+      return res.json(lowStockItems);
+    } catch (err) {
+      console.error(err);
+      return res
+        .status(500)
+        .json({ message: "Lỗi server", error: err.message });
+    }
+  },
 };

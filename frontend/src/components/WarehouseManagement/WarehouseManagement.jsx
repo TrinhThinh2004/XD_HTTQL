@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { FiBox, FiClipboard, FiTruck, FiArchive } from "react-icons/fi";
 
 import ImportReceipts from "../ImportReceiptComponent/ImportReceipt";
 import ImportDetails from "../ImportDetailComponent/ImportDetails";
@@ -25,46 +24,53 @@ export default function WarehouseManagement() {
     {
       id: "importReceipts",
       label: "Phiếu nhập",
-      icon: <FiBox className="w-5 h-5" />,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H4a2 2 0 00-2 2v7m16 0a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4a2 2 0 012-2m16 0h-2M4 13H6m8 0v4m-4-4v4" />
+        </svg>
+      ),
     },
     {
       id: "importDetails",
       label: "Chi tiết nhập",
-      icon: <FiClipboard className="w-5 h-5" />,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      ),
     },
-    // {
-    //   id: "exportReceipts",
-    //   label: "Phiếu xuất",
-    //   icon: <FiTruck className="w-5 h-5" />,
-    // },
-    // {
-    //   id: "exportDetails",
-    //   label: "Chi tiết xuất",
-    //   icon: <FiArchive className="w-5 h-5" />,
-    // },
   ];
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex justify-center gap-2 border-b border-gray-200 bg-white shadow-sm px-4 py-2 sticky top-0 z-10">
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full font-semibold text-xs transition-all duration-200 shadow-sm
-              ${
-                activeTab === item.id
-                  ? "bg-gradient-to-r from-[#00BFFF] to-[#87CEFA] text-white shadow-md scale-105"
-                  : "bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-[#00BFFF] hover:to-[#87CEFA] hover:text-white"
-              }`}
-          >
-            {item.icon}
-            <span>{item.label}</span>
-          </button>
-        ))}
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-textPrimary tracking-tight">
+            Quản Lý Hóa Đơn
+          </h1>
+          <p className="text-textSecondary mt-1">Quản lý nhập xuất kho và chi tiết chứng từ</p>
+        </div>
+        
+        <div className="flex bg-gray-100 p-1 rounded-xl shadow-inner">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`flex items-center gap-2 px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200
+                ${
+                  activeTab === item.id
+                    ? "bg-white text-primary shadow-sm"
+                    : "text-textSecondary hover:text-textPrimary"
+                }`}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex-1 p-4 overflow-auto bg-gray-50">
+      <div className="animate-in fade-in duration-300">
         {activeTab === "importReceipts" && <ImportReceipts />}
         {activeTab === "importDetails" && <ImportDetails />}
         {activeTab === "exportReceipts" && <ExportReceipts />}

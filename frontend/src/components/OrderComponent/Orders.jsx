@@ -28,35 +28,36 @@ function Orders() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-textPrimary mb-6">
-        Quản Lý Đơn Hàng
-      </h1>
-      <section className="mb-8">
-        {!showWizard && (
-          <OrderTable
-            orders={orders}
-            loading={loading}
-            onCreateOrder={() => setShowWizard(true)}
-            onOrderChanged={handleOrderChanged}
-          />
-        )}
-        {showWizard && (
-          <OrderWizard
-            onOrderCreated={() => {
-              setShowWizard(false);
-              fetchOrders();
-            }}
-          />
-        )}
-      </section>
-      <section className="mb-8">
-        <OrderStatus
+    <div className='space-y-6'>
+      <div>
+        <h1 className='text-3xl font-bold text-textPrimary tracking-tight'>
+          Quản lý đơn hàng
+        </h1>
+        <p className="text-textSecondary mt-1">Theo dõi và xử lý các đơn hàng trong hệ thống</p>
+      </div>
+
+      {!showWizard && (
+        <OrderTable
           orders={orders}
           loading={loading}
+          onCreateOrder={() => setShowWizard(true)}
           onOrderChanged={handleOrderChanged}
         />
-      </section>
+      )}
+      {showWizard && (
+        <OrderWizard
+          onOrderCreated={() => {
+            setShowWizard(false);
+            fetchOrders();
+          }}
+        />
+      )}
+
+      <OrderStatus
+        orders={orders}
+        loading={loading}
+        onOrderChanged={handleOrderChanged}
+      />
     </div>
   );
 }

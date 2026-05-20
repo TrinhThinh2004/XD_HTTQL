@@ -1,32 +1,30 @@
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import axiosInstance from "../utils/axiosInstance";
 
 const fetchAllCustomers = async (
   page = 1,
   limit = 1000,
   search = "",
 ) => {
-  return axios.get(`${API_URL}/api/v1/customer/get-all-customers`, {
+  return axiosInstance.get(`/customer/get-all-customers`, {
     params: { page, limit, search, },
   });
 };
 const createCustomer = async (data) => {
-  return axios.post(`${API_URL}/api/v1/customer/create-customer`, data);
+  return axiosInstance.post(`/customer/create-customer`, data);
 };
 
 const updateCustomer = async (data) => {
-  return axios.put(`${API_URL}/api/v1/customer/update-customer`, data);
+  return axiosInstance.put(`/customer/update-customer`, data);
 };
 
 const deleteCustomer = async (id) => {
-  return await axios.delete(
-    `${API_URL}/api/v1/customer/delete-customer?id=${id}`
+  return await axiosInstance.delete(
+    `/customer/delete-customer?id=${id}`
   );
 };
 const deleteManyCustomer = async (ids) => {
   if (!ids || !ids.length) throw new Error("Missing ids");
-  return await axios.post(`${API_URL}/api/v1/customer/delete-many-customers`, {
+  return await axiosInstance.post(`/customer/delete-many-customers`, {
     ids,
   });
 };

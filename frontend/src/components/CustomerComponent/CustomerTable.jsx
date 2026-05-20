@@ -1,40 +1,12 @@
 import React, { useState } from "react";
-import {
-  FiEdit,
-  FiTrash2,
-  FiChevronLeft,
-  FiChevronRight,
-} from "react-icons/fi";
 import CustomerOrderHistory from "./CustomerOrderHistory";
-function getPageNumbers(currentPage, totalPages, maxPagesToShow = 5) {
-  const pages = [];
-  if (totalPages <= maxPagesToShow) {
-    for (let i = 1; i <= totalPages; i++) pages.push(i);
-  } else {
-    const sidePages = Math.floor(maxPagesToShow / 2);
-    let start = Math.max(2, currentPage - sidePages);
-    let end = Math.min(totalPages - 1, currentPage + sidePages);
 
-    if (currentPage <= sidePages) {
-      start = 2;
-      end = maxPagesToShow - 1;
-    } else if (currentPage >= totalPages - sidePages) {
-      start = totalPages - (maxPagesToShow - 2);
-      end = totalPages - 1;
-    }
+// Common Components
+import Button from '../common/Button';
+import Table from '../common/Table';
+import Pagination from '../common/Pagination';
+import Card from '../common/Card';
 
-    pages.push(1);
-
-    if (start > 2) pages.push("...");
-
-    for (let i = start; i <= end; i++) pages.push(i);
-
-    if (end < totalPages - 1) pages.push("...");
-
-    pages.push(totalPages);
-  }
-  return pages;
-}
 export default function CustomerTable({
   customers,
   selectedIds,
@@ -55,178 +27,111 @@ export default function CustomerTable({
     setShowOrderHistory(true);
   };
 
-  const Pagination = () => (
-    <div className="flex justify-center gap-2 mt-5 flex-wrap">
-      <button
-        onClick={() => onPageChange(1)}
-        disabled={page === 1}
-        className="px-3 py-1 border border-border rounded-md text-textSecondary hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Trang đầu
-      </button>
-      <button
-        onClick={() => onPageChange(Math.max(1, page - 1))}
-        disabled={page === 1}
-        className="px-3 py-1 border border-border rounded-md text-textSecondary hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <FiChevronLeft size={18} />
-      </button>
-
-     {getPageNumbers(page, totalPages).map((p, idx) =>
-  p === "..." ? (
-    <span key={idx} className="px-3 py-1">...</span>
-  ) : (
-    <button
-      key={idx}
-      onClick={() => onPageChange(p)}
-      className={`px-3 py-1 border border-border rounded-md transition-colors ${
-        page === p
-          ? "gradient-bg text-white shadow"
-          : "text-textSecondary hover:bg-gray-50"
-      }`}
-    >
-      {p}
-    </button>
-  )
-)}
-
-      <button
-        onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-        disabled={page === totalPages}
-        className="px-3 py-1 border border-border rounded-md text-textSecondary hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <FiChevronRight size={18} />
-      </button>
-      <button
-        onClick={() => onPageChange(totalPages)}
-        disabled={page === totalPages}
-        className="px-3 py-1 border border-border rounded-md text-textSecondary hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Trang cuối
-      </button>
-    </div>
-  );
+  const columns = [
+    {
+      title: (
+        <input
+          type="checkbox"
+          checked={selectedIds.length === customers.length && customers.length > 0}
+          onChange={toggleSelectAll}
+          className="accent-primary rounded"
+        />
+      ),
+      key: 'checkbox',
+      className: 'w-12',
+      render: (_, row) => (
+        <input
+          type="checkbox"
+          checked={selectedIds.includes(row.id)}
+          onChange={() => toggleSelect(row.id)}
+          className="accent-primary rounded"
+        />
+      )
+    },
+    {
+      title: 'Họ và tên',
+      key: 'name',
+      render: (name) => <span className="font-bold text-textPrimary">{name}</span>
+    },
+    {
+      title: 'Email',
+      key: 'email',
+    },
+    {
+      title: 'Số điện thoại',
+      key: 'phoneNumber',
+      render: (phone) => phone || "-"
+    },
+    {
+      title: 'Địa chỉ',
+      key: 'address',
+      render: (address) => <div className="max-w-xs truncate text-xs text-textSecondary" title={address}>{address || "-"}</div>
+    },
+    {
+      title: 'Đơn hàng',
+      key: 'orderCount',
+      render: (count, row) => (
+        <button
+          className="text-primary hover:underline font-semibold"
+          onClick={() => handleShowOrderHistory(row)}
+        >
+          {count || 0} đơn
+        </button>
+      )
+    },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      className: 'text-right',
+      render: (_, row) => (
+        <div className="flex justify-end space-x-1">
+          <Button 
+            variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-100/50 hover:text-blue-700 transition-all rounded-lg active:scale-90"
+            onClick={() => onEdit(row)}
+            title="Chỉnh sửa"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </Button>
+          <Button 
+            variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-50 transition-colors"
+            onClick={() => onDelete(row.id)}
+            title="Xóa"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          </Button>
+        </div>
+      )
+    }
+  ];
 
   return (
-    <div className="bg-card shadow-card rounded-lg overflow-hidden">
-      <div className="p-6">
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="min-w-full divide-y divide-border">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedIds.length === customers.length &&
-                      customers.length > 0
-                    }
-                    onChange={toggleSelectAll}
-                    className="accent-primary"
-                  />
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  Tên
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  SĐT
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  Địa chỉ
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  Đơn hàng
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-border">
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-6 text-center text-textSecondary"
-                  >
-                    Đang tải...
-                  </td>
-                </tr>
-              ) : customers.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-6 text-center text-textSecondary"
-                  >
-                    Không tìm thấy khách hàng.
-                  </td>
-                </tr>
-              ) : (
-                customers.map((c) => (
-                  <tr
-                    key={c.id}
-                    className="hover:bg-primaryLight/10 transition-colors duration-200"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(c.id)}
-                        onChange={() => toggleSelect(c.id)}
-                        className="accent-primary"
-                      />
-                    </td>
-                
-                    <td className="px-6 py-4 whitespace-nowrap text-sm  text-textPrimary">
-                      {c.name}
-                    </td>
-                
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-textPrimary">
-                      {c.email}
-                    </td>
-                
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-textPrimary">
-                      {c.phoneNumber || "-"}
-                    </td>
-                  
-                    <td className="px-6 py-4 whitespace-normal break-words max-w-sm text-sm text-textPrimary">
-                      {c.address || "-"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        className="text-primary hover:underline"
-                        onClick={() => handleShowOrderHistory(c)}
-                      >
-                        {c.orderCount || 0} đơn hàng
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => onEdit(c)}
-                          title="Sửa"
-                          className="p-1 text-primary hover:text-blue-500 transition-colors rounded"
-                        >
-                          <FiEdit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => onDelete(c.id)}
-                          title="Xóa"
-                          className="p-1 text-red-500 hover:text-red-700 transition-colors"
-                        >
-                          <FiTrash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        {totalPages > 1 && <Pagination />}
+    <Card noPadding>
+      <Table 
+        columns={columns} 
+        data={customers} 
+        loading={loading} 
+        emptyMessage="Không tìm thấy khách hàng nào"
+      />
+      
+      <div className="p-4 border-t border-border">
+        <Pagination 
+          currentPage={page} 
+          totalPages={totalPages} 
+          onPageChange={onPageChange} 
+          className="mt-0"
+        />
       </div>
 
       {showOrderHistory && selectedCustomer && (
@@ -235,6 +140,6 @@ export default function CustomerTable({
           onClose={() => setShowOrderHistory(false)}
         />
       )}
-    </div>
+    </Card>
   );
 }

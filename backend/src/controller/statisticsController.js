@@ -272,12 +272,56 @@ const getOrderStatusStats = async (req, res) => {
   }
 };
 
+// Hàng tồn kho lâu ngày (Deadstock) - Không có giao dịch xuất/bán trong X tháng
+const getDeadstockReport = async (req, res) => {
+  try {
+    const months = parseInt(req.query.months) || 3;
+    const targetDate = new Date();
+    targetDate.setMonth(targetDate.getMonth() - months);
+
+    // Lấy ID các sản phẩm đã được bán/xuất trong X tháng qua
+    const recentOrders = await OrderItem.findAll({
+      include: [
+        {
+          model: Order,
+          as: "order",
+          where: {
+            createdAt: { [Op.gte]: targetDate }
+          },
+          attributes: []
+        }
+      ],
+      attributes: ['productId'],
+      group: ['productId']
+    });
+
+    const activeProductIds = recentOrders.map(o => o.productId);
+
+    // Tìm các sản phẩm trong kho (có số lượng > 0) KHÔNG nằm trong activeProductIds
+    const deadstocks = await Stock.findAll({
+      where: {
+        stock: { [Op.gt]: 0 },
+        productId: { [Op.notIn]: activeProductIds.length > 0 ? activeProductIds : [0] },
+        deleted: false
+      },
+      attributes: ['id', 'productId', 'name', 'stock', 'price', 'updatedAt'],
+      order: [['updatedAt', 'ASC']]
+    });
+
+    res.status(200).json(deadstocks);
+  } catch (error) {
+    console.error("getDeadstockReport error:", error);
+    res.status(500).json({ message: "Lỗi máy chủ nội bộ", error: error.message });
+  }
+};
+
 module.exports = {
   getTotalRevenue,
   getGeneralStats,
   getRevenueByPeriod,
   getTopSellingProducts,
   getOrderStatusStats,
+  getDeadstockReport,
   getAllOrders,
   getAllStock,
   getAllCustomers

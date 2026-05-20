@@ -9,8 +9,6 @@ export default function CustomerModal({
   onClose,
   onSubmit,
 }) {
-  const [coords, setCoords] = useState(null);
-
   const handleSelect = (suggest) => {
     if (suggest?.lat && suggest?.lon) {
       onChange({
@@ -22,7 +20,6 @@ export default function CustomerModal({
       onChange({
         target: { name: "lng", value: parseFloat(suggest.lon) },
       });
-      setCoords({ lat: parseFloat(suggest.lat), lng: parseFloat(suggest.lon) });
     }
   };
 

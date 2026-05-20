@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { editProduct } from "../../API/products/productsApi";
+import { getManySupplier } from "../../API/suppliersApi/suppliersApi";
 import { toast } from "react-toastify";
 import upload_area from "../../assets/assets";
 import { useNavigate } from "react-router";
 
-const EditProduct = ({ productData }) => {
+const EditProduct = ({ productData, onSuccess }) => {
   const id = productData?.id;
   const [preview, setPreview] = useState("");
   const [editing, setEditing] = useState(false);
-
-  const navigate = useNavigate();
+  const [suppliers, setSuppliers] = useState([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -18,7 +18,20 @@ const EditProduct = ({ productData }) => {
     description: "",
     image: "",
     status: "Còn hàng",
+    supplierId: "",
   });
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        const data = await getManySupplier();
+        setSuppliers(data);
+      } catch (error) {
+        console.error("Error fetching suppliers:", error);
+      }
+    };
+    fetchSuppliers();
+  }, []);
 
   useEffect(() => {
     if (productData) {
@@ -29,6 +42,7 @@ const EditProduct = ({ productData }) => {
         description: productData.description,
         status: productData.status,
         image: productData.image,
+        supplierId: productData.supplierId || "",
       });
       setPreview(productData.image);
     }
@@ -53,6 +67,7 @@ const EditProduct = ({ productData }) => {
       formData.append("description", form.description);
       formData.append("price", String(form.price));
       formData.append("status", form.status);
+      formData.append("supplierId", form.supplierId);
 
       if (form.image instanceof File) {
         formData.append("image", form.image);
@@ -62,7 +77,7 @@ const EditProduct = ({ productData }) => {
 
       if (data.success) {
         toast.success(data.message);
-        navigate("/products");
+        if (onSuccess) onSuccess();
       } else {
         toast.error(data.message);
       }
@@ -191,6 +206,26 @@ const EditProduct = ({ productData }) => {
             >
               <option value="Còn hàng">Còn hàng</option>
               <option value="Hết hàng">Hết hàng</option>
+            </select>
+          </div>
+
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nhà cung cấp (Gán mặc định)
+            </label>
+            <select
+              value={form.supplierId}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, supplierId: e.target.value }))
+              }
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">-- Chọn nhà cung cấp --</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
             </select>
           </div>
 

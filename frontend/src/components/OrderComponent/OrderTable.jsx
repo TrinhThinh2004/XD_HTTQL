@@ -1,258 +1,166 @@
-import React, { useState, useEffect } from "react";
-import { FiPlus, FiEye, FiTrash2 } from "react-icons/fi";
+import React, { useState, useEffect, useMemo } from "react";
 import OrderDetail from "./OrderDetail";
 import { deleteOrder } from "../../API/orders/ordersApi";
 import { toast } from "react-toastify";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+
+// Common Components
+import Button from '../common/Button';
+import Table from '../common/Table';
+import Pagination from '../common/Pagination';
+import Badge from '../common/Badge';
+import Card from '../common/Card';
+import ConfirmModal from '../common/ConfirmModal';
 
 const statusMap = {
   pending: {
     text: "Chờ xác nhận",
-    className: "bg-yellow-100 text-yellow-800",
+    variant: "yellow",
   },
   finding_shipper: {
     text: "Đang tìm shipper",
-    className: "bg-purple-100 text-purple-800",
+    variant: "blue",
   },
   shipping: {
     text: "Đang giao",
-    className: "bg-[#FFD700]/20 text-yellow-600",
+    variant: "orange",
   },
   delivered: {
     text: "Đã giao",
-    className: "bg-green-100 text-green-800",
+    variant: "green",
   },
   cancelled: {
     text: "Đã hủy",
-    className: "bg-red-100 text-red-800",
+    variant: "red",
   },
 };
-
-function getPageNumbers(currentPage, totalPages, maxPagesToShow = 5) {
-  const pages = [];
-  if (totalPages <= maxPagesToShow) {
-    for (let i = 1; i <= totalPages; i++) pages.push(i);
-  } else {
-    const sidePages = Math.floor(maxPagesToShow / 2);
-    let start = Math.max(2, currentPage - sidePages);
-    let end = Math.min(totalPages - 1, currentPage + sidePages);
-
-    // Điều chỉnh khi gần đầu hoặc cuối
-    if (currentPage <= sidePages) {
-      start = 2;
-      end = maxPagesToShow - 1;
-    } else if (currentPage >= totalPages - sidePages) {
-      start = totalPages - (maxPagesToShow - 2);
-      end = totalPages - 1;
-    }
-
-    pages.push(1); // luôn có trang đầu
-
-    if (start > 2) pages.push("...");
-
-    for (let i = start; i <= end; i++) pages.push(i);
-
-    if (end < totalPages - 1) pages.push("...");
-
-    pages.push(totalPages); // luôn có trang cuối
-  }
-  return pages;
-}
 
 const OrderTable = ({ orders, loading, onCreateOrder, onOrderChanged }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(7);
-  const [totalPages, setTotalPages] = useState(1);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
+  const itemsPerPage = 7;
+
+  const totalPages = Math.ceil(orders.length / itemsPerPage) || 1;
 
   useEffect(() => {
-    setTotalPages(Math.ceil(orders.length / itemsPerPage) || 1);
-    if (currentPage > Math.ceil(orders.length / itemsPerPage)) {
+    if (currentPage > totalPages) {
       setCurrentPage(1);
     }
-  }, [orders, itemsPerPage]);
+  }, [orders, totalPages, currentPage]);
 
-  const sortedOrders = [...orders].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-  );
+  const paginatedOrders = useMemo(() => {
+    const sorted = [...orders].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+    const start = (currentPage - 1) * itemsPerPage;
+    return sorted.slice(start, start + itemsPerPage);
+  }, [orders, currentPage, itemsPerPage]);
 
-  const paginatedOrders = sortedOrders.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const goToPage = (page) => {
-    if (page < 1) page = 1;
-    if (page > totalPages) page = totalPages;
-    setCurrentPage(page);
+  const handleDeleteOrder = async () => {
+    try {
+      await deleteOrder(orderToDelete);
+      toast.success("Xóa đơn hàng thành công");
+      if (onOrderChanged) onOrderChanged();
+    } catch (error) {
+      toast.error("Xóa đơn hàng thất bại");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setOrderToDelete(null);
+    }
   };
 
-  const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm("Bạn có chắc muốn xóa đơn hàng này?")) return;
-    await deleteOrder(orderId);
-    toast.success("Xóa đơn hàng thành công");
-    if (onOrderChanged) onOrderChanged();
-  };
+  const columns = [
+    {
+      title: 'Mã đơn',
+      key: 'orderNumber',
+      render: (val) => <span className="font-bold text-textPrimary">{val}</span>
+    },
+    {
+      title: 'Khách hàng',
+      key: 'customerName',
+    },
+    {
+      title: 'Trạng thái',
+      key: 'status',
+      render: (status) => {
+        const info = statusMap[status] || { text: status, variant: 'gray' };
+        return <Badge variant={info.variant}>{info.text}</Badge>;
+      }
+    },
+    {
+      title: 'Tổng tiền',
+      key: 'total',
+      render: (val) => <span className="font-semibold text-primary">{val?.toLocaleString()}đ</span>
+    },
+    {
+      title: 'Ngày tạo',
+      key: 'createdAt',
+      render: (date) => <span className="text-textSecondary text-xs">{new Date(date).toLocaleDateString("vi-VN")}</span>
+    },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      className: 'text-right',
+      render: (_, order) => (
+        <div className="flex justify-end space-x-2">
+          <Button 
+            variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50 transition-colors"
+            onClick={() => setSelectedOrder(order)}
+            title="Xem chi tiết"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+          </Button>
+          <Button 
+            variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-50 transition-colors"
+            onClick={() => {
+              setOrderToDelete(order.id);
+              setIsDeleteModalOpen(true);
+            }}
+            title="Xóa"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          </Button>
+        </div>
+      )
+    }
+  ];
 
   return (
-    <div className="bg-card shadow-card rounded-lg overflow-hidden">
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-textPrimary">
-            Danh sách đơn hàng ({orders.length})
-          </h3>
-          <button
+    <>
+      <Card 
+        title={`Danh sách đơn hàng (${orders.length})`}
+        extra={
+          <Button 
+            variant="gradient" 
+            size="sm" 
             onClick={onCreateOrder}
-            className="flex items-center gap-2 px-4 py-1.5 gradient-bg rounded-lg text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+            leftIcon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>}
           >
-            <FiPlus /> Tạo đơn hàng
-          </button>
-        </div>
+            Tạo đơn hàng
+          </Button>
+        }
+      >
+        <Table 
+          columns={columns} 
+          data={paginatedOrders} 
+          loading={loading} 
+        />
+        
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={setCurrentPage} 
+        />
+      </Card>
 
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="min-w-full divide-y divide-border">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  Mã đơn
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  Khách hàng
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  Trạng thái
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  Tổng tiền
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  Ngày tạo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-border">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-4 px-6">
-                    Đang tải...
-                  </td>
-                </tr>
-              ) : orders.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="text-center py-4 px-6 text-gray-500"
-                  >
-                    Không có đơn hàng nào.
-                  </td>
-                </tr>
-              ) : (
-                paginatedOrders.map((order) => {
-                  const statusInfo = statusMap[order.status] || {
-                    text: order.status,
-                    className: "bg-gray-100 text-gray-800",
-                  };
-                  return (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-textPrimary">
-                        {order.orderNumber}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-textPrimary">
-                        {order.customerName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full font-medium ${statusInfo.className}`}
-                        >
-                          {statusInfo.text}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-textPrimary">
-                        {order.total?.toLocaleString()}đ
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-textPrimary">
-                        {new Date(order.createdAt).toLocaleDateString("vi-VN")}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex space-x-2">
-                          <button
-                            className="p-1 text-primary hover:text-accent transition-colors"
-                            onClick={() => setSelectedOrder(order)}
-                            title="Xem chi tiết đơn hàng"
-                          >
-                            <FiEye className="w-5 h-5" />
-                          </button>
-                          <button
-                            className="p-1 text-red-500 hover:text-red-700 transition-colors"
-                            onClick={() => handleDeleteOrder(order.id)}
-                            title="Xóa đơn hàng"
-                          >
-                            <FiTrash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex justify-center gap-2 mt-5 flex-wrap">
-          <button
-            onClick={() => goToPage(1)}
-            disabled={currentPage === 1}
-            className="px-3 py-1 border border-border rounded-md text-textSecondary hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Trang đầu
-          </button>
-          <button
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-3 py-1 border border-border rounded-md text-textSecondary hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <FiChevronLeft size={18} />
-          </button>
-
-          {getPageNumbers(currentPage, totalPages).map((p, idx) =>
-            p === "..." ? (
-              <span key={idx} className="px-3 py-1">
-                ...
-              </span>
-            ) : (
-              <button
-                key={idx}
-                onClick={() => goToPage(p)}
-                className={`px-3 py-1 border border-border rounded-md transition-colors ${
-                  currentPage === p
-                    ? "gradient-bg text-white shadow"
-                    : "text-textSecondary hover:bg-gray-50"
-                }`}
-              >
-                {p}
-              </button>
-            )
-          )}
-
-          <button
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 border border-border rounded-md text-textSecondary hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <FiChevronRight size={18} />
-          </button>
-          <button
-            onClick={() => goToPage(totalPages)}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 border border-border rounded-md text-textSecondary hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Trang cuối
-          </button>
-        </div>
-      </div>
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteOrder}
+        title="Xác nhận xóa đơn hàng"
+        message="Bạn có chắc chắn muốn xóa đơn hàng này? Hành động này không thể hoàn tác."
+      />
 
       {selectedOrder && (
         <OrderDetail
@@ -260,7 +168,7 @@ const OrderTable = ({ orders, loading, onCreateOrder, onOrderChanged }) => {
           onClose={() => setSelectedOrder(null)}
         />
       )}
-    </div>
+    </>
   );
 };
 export default OrderTable;

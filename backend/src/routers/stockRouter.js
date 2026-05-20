@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const stockController = require("../controller/stockController");
+
+router.get("/expiry-alerts", stockController.getExpiryAlerts);
 router.get("/low-stock", stockController.getLowOrOutOfStock);
 router.get("/", stockController.getAllStocks);
 router.get("/:id", stockController.getStockById);

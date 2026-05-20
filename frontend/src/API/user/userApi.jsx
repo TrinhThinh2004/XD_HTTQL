@@ -1,17 +1,12 @@
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import axiosInstance from "../utils/axiosInstance";
 
 const SignInUser = async (userEmail, userPassword) => {
   try {
-    const response = await axios.post(
-      `${API_URL}/api/v1/user/login-user`,
+    const response = await axiosInstance.post(
+      `/user/login-user`,
       {
         email: userEmail,
         password: userPassword,
-      },
-      {
-        withCredentials: true,
       }
     );
 
@@ -38,8 +33,8 @@ const SignInUser = async (userEmail, userPassword) => {
 
 const SignUpUser = async (data) => {
   try {
-    const response = await axios.post(
-      `${API_URL}/api/v1/user/create-new-user`,
+    const response = await axiosInstance.post(
+      `/user/create-new-user`,
       data
     );
     return response.data;
@@ -51,8 +46,8 @@ const SignUpUser = async (data) => {
 
 const GetDetailUser = async (userId) => {
   try {
-    const response = await axios.get(
-      `${API_URL}/api/v1/user/get-all-user?id=${userId}`
+    const response = await axiosInstance.get(
+      `/user/get-all-user?id=${userId}`
     );
     return response.data;
   } catch (e) {
@@ -60,9 +55,10 @@ const GetDetailUser = async (userId) => {
     throw e;
   }
 };
+
 const DeleteUser = async (userId) => {
   try {
-    const response = await axios.delete(`${API_URL}/api/v1/user/delete-user`, {
+    const response = await axiosInstance.delete(`/user/delete-user`, {
       data: { id: userId },
     });
     return response.data;
@@ -74,8 +70,8 @@ const DeleteUser = async (userId) => {
 
 const UpdateDetailUser = async (data) => {
   try {
-    const response = await axios.put(
-      `${API_URL}/api/v1/user/update-user`,
+    const response = await axiosInstance.put(
+      `/user/update-user`,
       data
     );
     return response.data;
@@ -86,23 +82,22 @@ const UpdateDetailUser = async (data) => {
 };
 
 const UserLogout = async () => {
-  return await axios.post(`${API_URL}/api/v1/user/logout`, null, {
-    withCredentials: true,
-  });
+  try {
+    const response = await axiosInstance.post(`/user/logout`);
+    localStorage.removeItem("user");
+    return response.data;
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
 };
 
 const RefreshToken = async () => {
   try {
-    const response = await axios.post(
-      `${API_URL}/api/v1/user/refresh-token`,
-      {},
-      { withCredentials: true }
+    const response = await axiosInstance.post(
+      `/user/refresh-token`
     );
-    const { access_token, message } = response.data;
-    return {
-      access_token,
-      message,
-    };
+    return response.data;
   } catch (e) {
     console.error(e);
     throw e;

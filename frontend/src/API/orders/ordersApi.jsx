@@ -1,31 +1,30 @@
-import axios from "axios";
-const API_URL = import.meta.env.VITE_API_URL;
+import axiosInstance from "../utils/axiosInstance";
 
 const getAllOrders = async () => {
-  const response = await axios.get(`${API_URL}/api/v1/orders/get-all`);
+  const response = await axiosInstance.get(`/orders/get-all`);
   return Array.isArray(response.data) ? response.data : [];
 };
 
 const createOrder = async (orderData) => {
-  const response = await axios.post(`${API_URL}/api/v1/orders/create`, orderData);
+  const response = await axiosInstance.post(`/orders/create`, orderData);
   return response.data;
 };
 
 const updateOrder = async (orderId, updatedData) => {
-  const response = await axios.put(
-    `${API_URL}/api/v1/orders/update/${orderId}`,
+  const response = await axiosInstance.put(
+    `/orders/update/${orderId}`,
     updatedData
   );
   return response.data;
 };
 
 const deleteOrder = async (orderId) => {
-  const response = await axios.delete(`${API_URL}/api/v1/orders/delete/${orderId}`);
+  const response = await axiosInstance.delete(`/orders/delete/${orderId}`);
   return response.data;
 };
 const findNearestShipper = async (lat, lng) => {
-  const response = await axios.get(`${API_URL}/api/v1/orders/find-nearest-shipper?lat=${lat}&lng=${lng}`);
+  const response = await axiosInstance.get(`/orders/find-nearest-shipper?lat=${lat}&lng=${lng}`);
   return response.data;
 };
 
-export { getAllOrders, createOrder, updateOrder, deleteOrder,findNearestShipper };
+export { getAllOrders, createOrder, updateOrder, deleteOrder, findNearestShipper };

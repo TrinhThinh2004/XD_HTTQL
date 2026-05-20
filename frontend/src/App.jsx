@@ -24,13 +24,12 @@ import Users from './components/UsersComponent/UsersComponent';
 
 function App() {
 	const dispatch = useDispatch();
-
 	useEffect(() => {
 		const storedUser = localStorage.getItem('user');
 		if (storedUser) {
 			dispatch(login(JSON.parse(storedUser)));
 		}
-	}, []);
+	}, [dispatch]);
 
 	return (
 		<>

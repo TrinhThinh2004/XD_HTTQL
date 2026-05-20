@@ -20,6 +20,14 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "productId",
         as: "exportDetailData",
       });
+      Stock.hasMany(models.StockBatch, {
+        foreignKey: "productId",
+        as: "batches",
+      });
+      Stock.belongsTo(models.Suppliers, {
+        foreignKey: "supplierId",
+        as: "supplier",
+      });
     }
   }
   Stock.init(
@@ -37,12 +45,19 @@ module.exports = (sequelize, DataTypes) => {
       warehouseLat: DataTypes.FLOAT,
       warehouseLng: DataTypes.FLOAT,
       note: DataTypes.TEXT,
+      minStock: {
+        type: DataTypes.INTEGER,
+        defaultValue: 10,
+      },
+      supplierId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       deleted: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-    },
-    {
+      }, {
       sequelize,
       modelName: "Stock",
     }

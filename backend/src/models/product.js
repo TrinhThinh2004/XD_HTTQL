@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     type: DataTypes.STRING, 
     price: DataTypes.STRING,
     stock: DataTypes.INTEGER,
-    image: DataTypes.BLOB("long"),
+    image: DataTypes.STRING,
     category: DataTypes.STRING,
     unit: DataTypes.STRING,
     status: DataTypes.STRING,
@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
     warehouseAddress: DataTypes.STRING,
     warehouseLat: DataTypes.FLOAT,
     warehouseLng: DataTypes.FLOAT,
+    minStock: {
+      type: DataTypes.INTEGER,
+      defaultValue: 10,
+    },
     deleted: DataTypes.BOOLEAN,
   }, {
     sequelize,

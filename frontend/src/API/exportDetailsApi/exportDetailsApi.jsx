@@ -1,21 +1,19 @@
-import axios from "axios";
+import axiosInstance from "../utils/axiosInstance";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-const fetchExportDetails = () => {
-  return axios.get(`${API_URL}/api/v1/export-detail/get-all`);
+const fetchExportDetails = (params) => {
+  return axiosInstance.get(`/export-detail/get-all`, { params });
 };
 
 const createExportDetail = (data) => {
-  return axios.post(`${API_URL}/api/v1/export-detail/create`, data);
+  return axiosInstance.post(`/export-detail/create`, data);
 };
 
 const updateExportDetail = (id, data) => {
-  return axios.put(`${API_URL}/api/v1/export-detail/update/${id}`, data);
+  return axiosInstance.put(`/export-detail/update/${id}`, data);
 };
 
 const deleteExportDetail = (id) => {
-  return axios.delete(`${API_URL}/api/v1/export-detail/remove/${id}`);
+  return axiosInstance.delete(`/export-detail/remove/${id}`);
 };
 
 export {

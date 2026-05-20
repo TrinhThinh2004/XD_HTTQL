@@ -14,19 +14,19 @@ export default function ReceiptDetailRow({
   const handleProductSelect = (e) => {
     const stockId = Number(e.target.value);
     const selectedProduct = productOptions.find((p) => p.id === stockId);
-    handleDetailChange(index, "productId", stockId);
-    handleDetailChange(
-      index,
-      "StockProductData",
-      selectedProduct || { name: "", unit: "" }
-    );
+    
+    let price = 0;
     if (selectedProduct && selectedProduct.price != null) {
       const basePrice = Number(selectedProduct.price) || 0;
       const discounted = Math.round(basePrice * (1 - DEFAULT_DISCOUNT_PERCENT / 100));
-      handleDetailChange(index, "price", Math.max(0, discounted));
-    } else {
-      handleDetailChange(index, "price", 0);
+      price = Math.max(0, discounted);
     }
+
+    handleDetailChange(index, {
+      productId: stockId,
+      StockProductData: selectedProduct || { name: "", unit: "" },
+      price: price
+    });
   };
   const StockProductData = detail.StockProductData || {};
 
@@ -48,7 +48,7 @@ export default function ReceiptDetailRow({
             </option>
             {productOptions.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} - Tồn kho: {p.stock} {p.unit}
+                {p.name} ({p.supplierName || "Chưa có NCC"}) - Tồn: {p.stock}
               </option>
             ))}
           </select>
@@ -99,7 +99,7 @@ export default function ReceiptDetailRow({
         <button
           type="button"
           onClick={() => removeReceiptDetail(index)}
-          className="text-red-500 hover:text-red-700 transition self-end mb-1"
+          className="text-rose-600 hover:text-rose-800 transition self-end mb-1 p-1 hover:bg-rose-50 rounded"
           disabled={formLoading}
         >
           Xóa
@@ -113,6 +113,9 @@ export default function ReceiptDetailRow({
           </div>
           <div>
             <strong>Loại:</strong> {detail.StockProductData.type}
+          </div>
+          <div>
+            <strong>Nhà cung cấp:</strong> {detail.StockProductData.supplierName || "Chưa có"}
           </div>
           <div>
             <strong>Kho:</strong> {detail.StockProductData.warehouseAddress}

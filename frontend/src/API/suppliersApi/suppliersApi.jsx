@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import axiosInstance from "../utils/axiosInstance";
 
 const getAllSuppliers = async ({ page = 1, limit = 10, search = "" }) => {
   try {
@@ -8,7 +6,7 @@ const getAllSuppliers = async ({ page = 1, limit = 10, search = "" }) => {
     const pageSize = parseInt(limit, 10) || 10;
     const query = search ? search.toString() : "";
 
-    const res = await axios.get(`${API_URL}/api/v1/suppliers/get-all`, {
+    const res = await axiosInstance.get(`/suppliers/get-all`, {
       params: {
         page: pageNumber,
         limit: pageSize,
@@ -32,7 +30,7 @@ const getAllSuppliers = async ({ page = 1, limit = 10, search = "" }) => {
 
 const getManySupplier = async () => {
   try {
-    const res = await axios.get(`${API_URL}/api/v1/suppliers/get-many`);
+    const res = await axiosInstance.get(`/suppliers/get-many`);
     return res.data;
   } catch (error) {
     throw error.response?.data || error;
@@ -41,7 +39,7 @@ const getManySupplier = async () => {
 
 const createSupplier = async (data) => {
   try {
-    const res = await axios.post(`${API_URL}/api/v1/suppliers/create`, data);
+    const res = await axiosInstance.post(`/suppliers/create`, data);
     return res.data;
   } catch (error) {
     console.error(
@@ -54,8 +52,8 @@ const createSupplier = async (data) => {
 
 const updateSupplier = async (id, data) => {
   try {
-    const res = await axios.put(
-      `${API_URL}/api/v1/suppliers/update/${id}`,
+    const res = await axiosInstance.put(
+      `/suppliers/update/${id}`,
       data
     );
     return res.data;
@@ -70,7 +68,7 @@ const updateSupplier = async (id, data) => {
 
 const deleteSupplier = async (id) => {
   try {
-    const res = await axios.delete(`${API_URL}/api/v1/suppliers/remove/${id}`);
+    const res = await axiosInstance.delete(`/suppliers/remove/${id}`);
     return res.data;
   } catch (error) {
     console.error(

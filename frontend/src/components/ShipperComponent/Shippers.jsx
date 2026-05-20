@@ -12,14 +12,17 @@ import {
 } from "../../API/shipper/shipperApi";
 import { getAllOrders } from "../../API/orders/ordersApi";
 import { toast } from "react-toastify";
+import ConfirmModal from "../common/ConfirmModal";
 
 function Shippers() {
   const [shippers, setShippers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [focusId, setFocusId] = useState(null);
+  const [focusInfo, setFocusInfo] = useState({ id: null, timestamp: 0 });
   const [loading, setLoading] = useState(true);
   const [editingShipper, setEditingShipper] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [shipperToDelete, setShipperToDelete] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -58,18 +61,16 @@ function Shippers() {
     }
   };
 
-  const handleDeleteShipper = async (id) => {
-    const confirm = window.confirm(
-      "🗑️ Bạn có chắc chắn muốn xoá shipper này không?"
-    );
-    if (!confirm) return;
-
+  const handleDeleteShipper = async () => {
     try {
-      await deleteShipper(id);
+      await deleteShipper(shipperToDelete);
       toast.success("Xóa shipper thành công!");
       await fetchData();
     } catch (err) {
       toast.error("Xóa shipper thất bại", err);
+    } finally {
+      setIsDeleteModalOpen(false);
+      setShipperToDelete(null);
     }
   };
 
@@ -99,20 +100,36 @@ function Shippers() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Quản Lý Shipper</h1>
+    <div className='space-y-6'>
+      <div>
+        <h1 className='text-3xl font-bold text-textPrimary tracking-tight'>
+          Quản lý shipper
+        </h1>
+        <p className="text-textSecondary mt-1">Quản lý đội ngũ giao hàng và theo dõi vị trí trực tuyến</p>
+      </div>
 
-      <ShipperMap shippers={shippers} focusId={focusId} />
+      <ShipperMap shippers={shippers} focusId={focusInfo} />
 
       <ShipperList
         shippers={shippers}
         orders={orders}
         onAddShipper={() => setShowAdd(true)}
-        onDeleteShipper={handleDeleteShipper}
-        onFocusShipper={setFocusId}
+        onDeleteShipper={(id) => {
+          setShipperToDelete(id);
+          setIsDeleteModalOpen(true);
+        }}
+        onFocusShipper={(id) => setFocusInfo({ id, timestamp: Date.now() })}
         onEditShipper={(shipper) => setEditingShipper(shipper)}
         onUpdateStatus={handleUpdateStatus}
         loading={loading}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteShipper}
+        title="Xác nhận xóa shipper"
+        message="Bạn có chắc chắn muốn xóa shipper này? Hành động này không thể hoàn tác."
       />
 
       {showAdd && (

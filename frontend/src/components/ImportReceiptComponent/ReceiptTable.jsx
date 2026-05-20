@@ -1,5 +1,6 @@
 import React from "react";
-import { FiEdit, FiTrash2 } from "react-icons/fi";
+import Table from "../common/Table";
+import Button from "../common/Button";
 
 export default function ReceiptTable({
   receipts,
@@ -8,133 +9,95 @@ export default function ReceiptTable({
   CURRENCY_UNIT,
   loading,
 }) {
-  const calculateTotalCost = (details) =>
-    `${details
-      .reduce((sum, d) => sum + d.quantity * d.price, 0)
-      .toLocaleString("vi-VN")} ${CURRENCY_UNIT}`;
+  const columns = [
+    {
+      title: 'Ngày nhập',
+      key: 'import_date',
+      render: (date) => <span className="text-textSecondary">{new Date(date).toLocaleDateString("vi-VN")}</span>
+    },
+    {
+      title: 'Người nhập',
+      key: 'userData',
+      render: (user, row) => (
+        <span className="font-medium text-textPrimary">
+          {user ? `${user.firstName} ${user.lastName}`.trim() || user.email : `ID ${row.userId}`}
+        </span>
+      )
+    },
+    {
+      title: 'Nhà cung cấp',
+      key: 'supplierData',
+      render: (sup, row) => sup?.name || `ID ${row.supplierId}`
+    },
+    {
+      title: 'Ghi chú',
+      key: 'note',
+      render: (val) => <span className="text-xs italic text-textSecondary">{val || "-"}</span>
+    },
+    {
+      title: 'Sản phẩm',
+      key: 'importDetailData',
+      render: (details) => (
+        <div className="max-h-32 overflow-y-auto space-y-1">
+          {details?.map((d, i) => (
+            <div key={i} className="text-[10px] bg-gray-50 p-1 rounded border border-gray-100">
+              <span className="font-bold text-primary">{d.StockProductData?.name}</span>
+              <span className="ml-1 text-textSecondary">x{d.quantity} {d.StockProductData?.unit}</span>
+            </div>
+          ))}
+        </div>
+      )
+    },
+    {
+      title: 'Tổng giá',
+      key: 'total',
+      render: (_, row) => {
+        const total = row.importDetailData?.reduce((sum, d) => sum + d.quantity * d.price, 0) || 0;
+        return <span className="font-bold text-primary">{total.toLocaleString("vi-VN")} {CURRENCY_UNIT}</span>
+      }
+    },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      className: 'text-right',
+      render: (_, r) => (
+        <div className="flex justify-end space-x-1">
+          <Button 
+            variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-100/50 hover:text-blue-700 transition-all rounded-lg active:scale-90"
+            onClick={() => handleEdit(r)}
+            title="Chỉnh sửa"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </Button>
+          <Button 
+            variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-50 transition-colors"
+            onClick={() => handleDelete(r.id)}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          </Button>
+        </div>
+      )
+    }
+  ];
 
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-gray-200 mb-4">
-      {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
-        </div>
-      ) : (
-        <table className="w-full divide-y divide-gray-200 table-fixed">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="w-28 px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Ngày nhập
-              </th>
-              <th className="w-36 px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Người nhập
-              </th>
-              <th className="w-36 px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Nhà cung cấp
-              </th>
-              <th className="w-40 px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Ghi chú
-              </th>
-              <th className="w-48 px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Chi tiết sản phẩm
-              </th>
-              <th className="w-36 px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Tổng giá
-              </th>
-              <th className="w-20 px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Hành động
-              </th>
-            </tr>
-          </thead>
-          <tbody className="hover:bg-gray-50 transition-colors duration-200">
-            {receipts.length > 0 ? (
-              receipts.map((r) => (
-                <tr key={r.id} className="text-sm text-gray-700">
-                  <td className="px-4 py-4 text-sm text-gray-800">
-                    {new Date(r.import_date).toLocaleDateString("vi-VN")}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-800">
-                    {r.userData
-                      ? `${r.userData.firstName} ${r.userData.lastName}`.trim() ||
-                        r.userData.email ||
-                        `ID ${r.userId}`
-                      : `ID ${r.userId}`}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-800">
-                    {r.supplierData?.name || `ID ${r.supplierId}`}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-800">
-                    {r.note || "-"}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-800 align-top">
-                    <div className="max-h-40 overflow-y-auto space-y-3">
-                      {r.importDetailData?.length ? (
-                        r.importDetailData.map((d, i) => (
-                          <div
-                            key={`${r.id}-${d.productId}-${i}`}
-                            className="whitespace-pre-line break-words border-b pb-2 last:border-b-0"
-                          >
-                            <div className="text-left">
-                              SP:{" "}
-                              {d.StockProductData?.name ||
-                                `Sản phẩm #${d.productId}`}
-                            </div>
-                            <div className="text-left">
-                              SL: {d.quantity}{" "}
-                              <span>
-                                {d.StockProductData?.unit || "đơn vị"}
-                              </span>
-                            </div>
-                            <div className="text-left">
-                              Giá:{" "}
-                              <span>
-                                {Number(d.price).toLocaleString("vi-VN")}{" "}
-                                {CURRENCY_UNIT}
-                              </span>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div>Chưa có sản phẩm</div>
-                      )}
-                    </div>
-                  </td>
-
-                  <td className="px-4 py-4 text-sm text-gray-800">
-                    {calculateTotalCost(r.importDetailData || [])}
-                  </td>
-
-                  <td className="px-4 py-4 text-sm text-gray-800 text-center">
-                    <div className="flex justify-center space-x-3">
-                      <button
-                        onClick={() => handleEdit(r)}
-                        className="p-1 text-primary hover:text-blue-500 transition-colors rounded"
-                      >
-                        <FiEdit className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(r.id)}
-                        className="p-1 text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        <FiTrash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan="7"
-                  className="text-center p-6 text-gray-400 text-base"
-                >
-                  Không có dữ liệu
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      )}
-    </div>
+    <Table 
+      columns={columns} 
+      data={receipts} 
+      loading={loading} 
+      emptyMessage="Không tìm thấy phiếu nhập nào"
+    />
   );
 }

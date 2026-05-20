@@ -5,8 +5,10 @@ import {
   fetchExportDetails,
   updateExportDetail,
 } from "../../API/exportDetailsApi/exportDetailsApi";
-import { FiPlus, FiEdit, FiTrash2, FiSearch } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiSearch } from "react-icons/fi";
 import { toast } from "react-toastify";
+import ConfirmModal from "../common/ConfirmModal";
+import Pagination from "../common/Pagination";
 
 export default function ExportDetails() {
   const [data, setData] = useState([]);
@@ -18,14 +20,27 @@ export default function ExportDetails() {
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedDetailId, setSelectedDetailId] = useState(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
-  const loadData = async () => {
+  const loadData = async (page = currentPage, searchQuery = search) => {
     setLoading(true);
     try {
-      const res = await fetchExportDetails();
-      setData(Array.isArray(res.data.data) ? res.data.data : []);
+      const res = await fetchExportDetails({
+        page,
+        limit: itemsPerPage,
+        search: searchQuery,
+      });
+      if (res.data.success) {
+        setData(res.data.details || []);
+        setTotalPages(res.data.totalPages || 1);
+        setCurrentPage(res.data.currentPage || 1);
+      }
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu:", error);
       toast.error("Lỗi Server 500");
@@ -38,6 +53,18 @@ export default function ExportDetails() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearch(value);
+    setCurrentPage(1);
+    loadData(1, value);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    loadData(page, search);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,19 +88,6 @@ export default function ExportDetails() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa?")) {
-      try {
-        await deleteExportDetail(id);
-        toast.success("Xóa đơn thành công!");
-        loadData();
-      } catch (error) {
-        console.error("Lỗi khi xóa:", error);
-        toast.error("Xóa không thành công!");
-      }
-    }
-  };
-
   const handleEdit = (item) => {
     setForm({
       exportId: item.exportId,
@@ -85,39 +99,28 @@ export default function ExportDetails() {
     setShowModal(true);
   };
 
-  const totalQuantity = Array.isArray(data)
-    ? data.reduce((sum, item) => sum + (item.quantity || 0), 0)
-    : 0;
-  const totalRevenue = Array.isArray(data)
-    ? data.reduce(
-        (sum, item) =>
-          sum +
-          Number(item.StockProductData?.price || 0) * (item.quantity || 0),
-        0
-      )
-    : 0;
-  const filteredData = Array.isArray(data)
-    ? data.filter((item) =>
-        item.StockProductData?.name
-          ?.toLowerCase()
-          .includes(search.toLowerCase())
-      )
-    : [];
+  const totalQuantity = data.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalRevenue = data.reduce(
+    (sum, item) =>
+      sum +
+      Number(item.StockProductData?.price || 0) * (item.quantity || 0),
+    0
+  );
 
   return (
     <div className="p-6 bg-blue-50 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
         <h1 className="text-2xl font-bold text-textPrimary mb-6">
-          Quản lý phiếu xuất
+          Chi tiết phiếu xuất
         </h1>
         <div className="flex gap-2 w-full md:w-auto">
-          <div className="relative flex-1">
+          <div className="relative flex-1 w-full sm:w-80">
             <FiSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Tìm sản phẩm..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={handleSearchChange}
               className="w-full border border-gray-300 rounded-lg px-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
@@ -136,10 +139,10 @@ export default function ExportDetails() {
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="mb-4 flex flex-col gap-2">
           <span className="font-semibold bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
-            Tổng số lượng: {totalQuantity.toLocaleString()} sản phẩm
+            Số lượng trang này: {totalQuantity.toLocaleString()} sản phẩm
           </span>
           <span className="font-semibold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-            Tổng doanh thu: {totalRevenue.toLocaleString()} ₫
+            Doanh thu trang này: {totalRevenue.toLocaleString()} ₫
           </span>
         </div>
 
@@ -171,14 +174,14 @@ export default function ExportDetails() {
                     Đang tải...
                   </td>
                 </tr>
-              ) : filteredData.length === 0 ? (
+              ) : data.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="text-center py-6 text-gray-500">
                     Không có dữ liệu
                   </td>
                 </tr>
               ) : (
-                filteredData.map((item) => (
+                data.map((item) => (
                   <tr
                     key={item.id}
                     className="hover:bg-gray-50 transition-colors duration-200"
@@ -230,14 +233,29 @@ export default function ExportDetails() {
                       <div className="flex justify-center space-x-3">
                         <button
                           onClick={() => handleEdit(item)}
-                          className="p-1 text-primary hover:text-blue-500 transition-colors rounded"
+                          className="p-1.5 text-blue-600 hover:text-blue-700 transition-all rounded-lg hover:bg-blue-100/50 active:scale-90"
                           title="Sửa chi tiết"
                         >
-                          <FiEdit className="w-5 h-5" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
                         </button>
                         <button
-                          onClick={() => handleDelete(item.id)}
-                          className="p-1 text-red-500 hover:text-red-700 transition-colors"
+                          onClick={() => {
+                            setSelectedDetailId(item.id);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="p-1 text-rose-600 hover:text-rose-800 transition-colors rounded hover:bg-rose-50"
                           title="Xóa chi tiết"
                         >
                           <FiTrash2 className="w-5 h-5" />
@@ -250,6 +268,31 @@ export default function ExportDetails() {
             </tbody>
           </table>
         </div>
+
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+
+        <ConfirmModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={async () => {
+            try {
+              await deleteExportDetail(selectedDetailId);
+              toast.success("Xóa đơn thành công!");
+              loadData();
+            } catch (error) {
+              console.error("Lỗi khi xóa:", error);
+              toast.error("Xóa không thành công!");
+            }
+          }}
+          title="Xác nhận xóa chi tiết"
+          message="Bạn có chắc chắn muốn xóa chi tiết xuất này? Hành động này không thể hoàn tác."
+        />
 
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">

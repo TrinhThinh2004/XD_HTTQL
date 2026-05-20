@@ -80,6 +80,14 @@ const ProductDetail = ({ productData }) => {
 												<p className='text-sm text-gray-500'>Vị trí</p>
 												<p className='font-medium'>{warehouseAddress}</p>
 											</div>
+											<div>
+												<p className='text-sm text-gray-500'>Nhà cung cấp</p>
+												<p className='font-medium'>{product.supplierName || 'Chưa có'}</p>
+											</div>
+											<div>
+												<p className='text-sm text-gray-500'>Tồn kho tối thiểu</p>
+												<p className='font-medium'>{product.minStock || '-'}</p>
+											</div>
 										</div>
 									</div>
 

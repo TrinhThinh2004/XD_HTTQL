@@ -7,6 +7,9 @@ module.exports = {
         where: {
           deleted: false,
         },
+        include: [
+          { model: db.Suppliers, as: "supplier", attributes: ["id", "name"] }
+        ],
         order: [["createdAt", "DESC"]],
       });
 
@@ -18,6 +21,7 @@ module.exports = {
           ...product,
           image: product.image ? `${baseUrl}${product.image}` : null,
           status: product.stock !== 0 ? "Còn hàng" : "Hết hàng",
+          supplierName: product.supplier?.name || "Chưa có NCC"
         };
       });
 
@@ -32,7 +36,11 @@ module.exports = {
   },
   getStockById: async (req, res) => {
     try {
-      const stockRecord = await db.Stock.findByPk(req.params.id, {});
+      const stockRecord = await db.Stock.findByPk(req.params.id, {
+        include: [
+          { model: db.Suppliers, as: "supplier", attributes: ["id", "name"] }
+        ],
+      });
       if (!stockRecord)
         return res.status(404).json({
           message: "Không tìm thấy stock",
@@ -48,7 +56,7 @@ module.exports = {
 
   updateStock: async (req, res) => {
     try {
-      const { stock, warehouseAddress } = req.body;
+      const { stock, warehouseAddress, supplierId } = req.body;
       const stockRecord = await db.Stock.findByPk(req.params.id);
       if (!stockRecord)
         return res.status(404).json({
@@ -58,6 +66,7 @@ module.exports = {
       await stockRecord.update({
         stock,
         warehouseAddress,
+        supplierId
       });
       return res.json({
         message: "Cập nhật stock thành công",
@@ -102,10 +111,78 @@ module.exports = {
             [db.Sequelize.Op.lt]: threshold,
           },
         },
+        include: [
+          { model: db.Suppliers, as: "supplier", attributes: ["id", "name"] }
+        ],
         order: [["stock", "ASC"]],
       });
 
-      return res.json(stocks);
+      return res.json(stocks.map(s => {
+        const item = s.toJSON();
+        return {
+          ...item,
+          supplierName: item.supplier?.name || "Chưa có NCC"
+        }
+      }));
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        message: "Lỗi server",
+        error: err.message,
+      });
+    }
+  },
+
+  getExpiryAlerts: async (req, res) => {
+    try {
+      const days = parseInt(req.query.days) || 30;
+      const today = new Date();
+      const targetDate = new Date();
+      targetDate.setDate(today.getDate() + days);
+
+      const expiringBatches = await db.StockBatch.findAll({
+        where: {
+          quantity: {
+            [db.Sequelize.Op.gt]: 0,
+          },
+          expiryDate: {
+            [db.Sequelize.Op.lte]: targetDate,
+            [db.Sequelize.Op.gte]: today,
+          },
+        },
+        include: [
+          {
+            model: db.Stock,
+            as: "product",
+            attributes: ["id", "name", "image", "unit"],
+          },
+        ],
+        order: [["expiryDate", "ASC"]],
+      });
+
+      const expiredBatches = await db.StockBatch.findAll({
+        where: {
+          quantity: {
+            [db.Sequelize.Op.gt]: 0,
+          },
+          expiryDate: {
+            [db.Sequelize.Op.lt]: today,
+          },
+        },
+        include: [
+          {
+            model: db.Stock,
+            as: "product",
+            attributes: ["id", "name", "image", "unit"],
+          },
+        ],
+        order: [["expiryDate", "DESC"]],
+      });
+
+      return res.json({
+        expiring: expiringBatches,
+        expired: expiredBatches,
+      });
     } catch (err) {
       console.error(err);
       return res.status(500).json({

@@ -9,9 +9,16 @@ import {
 import { toast } from "react-toastify";
 import FilterBar from "./FilterBar";
 import ExportExcel from "./ImportExportCSV";
-import CustomerModal from "./CustomerModal";
 import CustomerTable from "./CustomerTable";
 import { useSelector } from "react-redux";
+import AddressAutocomplete from "../AddressAutocomplete";
+
+// Common Components
+import Button from '../common/Button';
+import Input from '../common/Input';
+import Card from '../common/Card';
+import Modal from '../common/Modal';
+import ConfirmModal from '../common/ConfirmModal';
 
 function Customer() {
   const currentUser = useSelector((state) => state.user.currentUser);
@@ -20,6 +27,9 @@ function Customer() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleteManyModalOpen, setIsDeleteManyModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [form, setForm] = useState({
     id: null,
     name: "",
@@ -85,8 +95,6 @@ function Customer() {
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleCloseModal = () => setIsModalOpen(false);
-
   const handleOpenModal = (customer = null) => {
     if (customer) {
       setForm({ ...customer });
@@ -104,7 +112,19 @@ function Customer() {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async () => {
+  const handleAddressSelect = (suggest) => {
+    if (suggest?.lat && suggest?.lon) {
+      setForm(prev => ({
+        ...prev,
+        address: suggest.display_name,
+        lat: parseFloat(suggest.lat),
+        lng: parseFloat(suggest.lon)
+      }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
       const data = { ...form };
       if (isEditing) {
@@ -115,43 +135,31 @@ function Customer() {
         toast.success("Tạo khách hàng thành công!");
       }
       fetchCustomers();
-      handleCloseModal();
+      setIsModalOpen(false);
     } catch (e) {
-      toast.error("Lỗi khi lưu khách hàng!", e);
+      toast.error("Lỗi khi lưu khách hàng!");
     }
   };
 
-  const handleDelete = async (id) => {
-    if (currentUser.role !== "admin") {
-      toast.warning("Liên hệ quản lý!");
-      return;
-    }
-    if (!window.confirm("Bạn có chắc muốn xóa khách hàng này?")) return;
+  const handleDelete = async () => {
+    if (!selectedCustomer) return;
     try {
-      const res = await deleteCustomer(id);
+      const res = await deleteCustomer(selectedCustomer.id);
       if (res?.data?.errCode === 0) {
         toast.success("Xóa thành công!");
         fetchCustomers();
       } else {
-        setError(res?.data?.errMessage || "Unknown error");
-        toast.error("Xóa thất bại!");
+        toast.error(res?.data?.errMessage || "Xóa thất bại!");
       }
     } catch (e) {
-      setError("Error deleting customer: " + e.message);
-      toast.error("Xóa thất bại!");
+      toast.error("Lỗi khi xóa khách hàng!");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setSelectedCustomer(null);
     }
   };
 
   const handleDeleteMultiple = async () => {
-    if (currentUser.role !== "admin") {
-      toast.warning("Liên hệ quản lý!");
-      return;
-    }
-    if (!selectedIds.length) return;
-    if (
-      !window.confirm(`Bạn có chắc muốn xóa ${selectedIds.length} khách hàng?`)
-    )
-      return;
     try {
       const res = await deleteManyCustomer(selectedIds);
       if (res?.data?.errCode === 0) {
@@ -162,8 +170,28 @@ function Customer() {
         toast.error(res?.data?.errMessage || "Xóa thất bại!");
       }
     } catch (e) {
-      toast.error("Xóa thất bại: " + e.message);
+      toast.error("Xóa thất bại!");
+    } finally {
+      setIsDeleteManyModalOpen(false);
     }
+  };
+
+  const confirmDelete = (customer) => {
+    if (currentUser.role !== "admin") {
+      toast.warning("Chỉ Admin mới có quyền xóa!");
+      return;
+    }
+    setSelectedCustomer(customer);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteMultiple = () => {
+    if (currentUser.role !== "admin") {
+      toast.warning("Chỉ Admin mới có quyền xóa!");
+      return;
+    }
+    if (!selectedIds.length) return;
+    setIsDeleteManyModalOpen(true);
   };
 
   const toggleSelect = (id) => {
@@ -173,37 +201,47 @@ function Customer() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === paginatedCustomers.length) setSelectedIds([]);
+    if (selectedIds.length === paginatedCustomers.length && paginatedCustomers.length > 0) setSelectedIds([]);
     else setSelectedIds(paginatedCustomers.map((c) => c.id));
   };
 
   return (
-    <div className="p-6 bg-blue-50 min-h-screen">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <h1 className="text-2xl font-bold text-textPrimary mb-6">
-          Quản Lý Khách Hàng
-        </h1>
-        <div className="flex flex-wrap gap-3">
-          <button
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-textPrimary tracking-tight">
+            Quản Lý Khách Hàng
+          </h1>
+          <p className="text-textSecondary mt-1">Quản lý cơ sở dữ liệu khách hàng và lịch sử giao dịch</p>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          {selectedIds.length > 0 && (
+            <Button 
+              variant="danger" 
+              onClick={confirmDeleteMultiple}
+              leftIcon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
+            >
+              Xóa {selectedIds.length} mục
+            </Button>
+          )}
+          <ExportExcel customers={customers} />
+          <Button 
+            variant="gradient" 
+            size="lg"
             onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-6 py-2 rounded-lg gradient-bg text-white font-semibold shadow-card hover:opacity-90 transition-all"
+            leftIcon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>}
           >
             Thêm khách hàng
-          </button>
-          <ExportExcel customers={customers} />
-          {selectedIds.length > 0 && (
-            <button
-              onClick={handleDeleteMultiple}
-              className="px-6 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-all duration-200"
-            >
-              Xóa {selectedIds.length} khách hàng
-            </button>
-          )}
+          </Button>
         </div>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-400 text-red-700 rounded shadow-sm">
+        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center shadow-sm">
+          <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
           {error}
         </div>
       )}
@@ -215,27 +253,83 @@ function Customer() {
         onStatusFilterChange={setStatusFilter}
       />
 
-      {isModalOpen && (
-        <CustomerModal
-          isEditing={isEditing}
-          form={form}
-          onChange={handleChange}
-          onClose={handleCloseModal}
-          onSubmit={handleSubmit}
-        />
-      )}
-
       <CustomerTable
         customers={paginatedCustomers}
         selectedIds={selectedIds}
         toggleSelect={toggleSelect}
         toggleSelectAll={toggleSelectAll}
         onEdit={handleOpenModal}
-        onDelete={handleDelete}
+        onDelete={confirmDelete}
         loading={loading}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
+      />
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={isEditing ? "Cập nhật khách hàng" : "Thêm khách hàng mới"}
+        size="md"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Hủy</Button>
+            <Button variant="gradient" onClick={handleSubmit}>
+              {isEditing ? "Cập nhật" : "Lưu khách hàng"}
+            </Button>
+          </div>
+        }
+      >
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <Input
+            label="Tên khách hàng"
+            name="name"
+            placeholder="Nhập tên khách hàng"
+            value={form.name}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            label="Email"
+            type="email"
+            name="email"
+            placeholder="example@mail.com"
+            value={form.email}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            label="Số điện thoại"
+            name="phoneNumber"
+            placeholder="09xx xxx xxx"
+            value={form.phoneNumber}
+            onChange={handleChange}
+          />
+          <div className="flex flex-col space-y-1">
+            <label className="text-sm font-semibold text-textPrimary">Địa chỉ</label>
+            <AddressAutocomplete
+              value={form.address}
+              onChange={(value) => handleChange({ target: { name: "address", value } })}
+              onSelect={handleAddressSelect}
+            />
+          </div>
+        </form>
+      </Modal>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa khách hàng"
+        message={`Bạn có chắc muốn xóa khách hàng "${selectedCustomer?.name}"? Hành động này không thể hoàn tác.`}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteManyModalOpen}
+        onClose={() => setIsDeleteManyModalOpen(false)}
+        onConfirm={handleDeleteMultiple}
+        title="Xác nhận xóa nhiều khách hàng"
+        message={`Bạn có chắc muốn xóa ${selectedIds.length} khách hàng đã chọn? Hành động này không thể hoàn tác.`}
       />
     </div>
   );

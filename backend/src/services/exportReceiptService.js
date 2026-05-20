@@ -1,7 +1,21 @@
 const db = require("../models/index");
 
-const getAllExportReceipts = async () => {
-  return await db.ExportReceipts.findAll({
+const getAllExportReceipts = async ({ page, limit, search }) => {
+  const offset = (page - 1) * limit;
+  const where = {};
+
+  if (search) {
+    const { Op } = require("sequelize");
+    where[Op.or] = [
+      { reason: { [Op.like]: `%${search}%` } },
+      { note: { [Op.like]: `%${search}%` } },
+    ];
+  }
+
+  const { count, rows } = await db.ExportReceipts.findAndCountAll({
+    where,
+    limit,
+    offset,
     include: [
       { model: db.User, as: "userData" },
       {
@@ -10,7 +24,16 @@ const getAllExportReceipts = async () => {
         include: [{ model: db.Stock, as: "StockProductData" }],
       },
     ],
+    distinct: true,
+    order: [["export_date", "DESC"], ["id", "DESC"]],
   });
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    receipts: rows,
+  };
 };
 
 const getExportReceiptById = async (id) => {

@@ -4,9 +4,6 @@ import { FiSearch, FiMapPin, FiActivity } from "react-icons/fi";
 function FilterBar({
   search,
   onSearchChange,
-  cityFilter,
-  onCityFilterChange,
-  allCities,
 }) {
   return (
     <div className="flex flex-col md:flex-row gap-3 mb-4">

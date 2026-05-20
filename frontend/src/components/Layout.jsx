@@ -4,18 +4,19 @@ import Sidebar from './Sidebar';
 
 const Layout = () => {
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen overflow-hidden bg-bg-light">
       <Header />
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="w-64 bg-card shadow-card flex flex-col h-full overflow-y-auto">
+      <div className="flex flex-1 overflow-hidden relative">
+        <aside className="hidden md:flex md:flex-shrink-0 w-64 bg-white shadow-xl z-20 transition-all duration-300">
           <Sidebar />
-        </div>
+        </aside>
 
-
-        <div className="flex-1 overflow-auto bg-blue-50">
-          <Outlet />
-        </div>
+        <main className="flex-1 overflow-y-auto relative z-10 p-4 md:p-8">
+          <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
+            <Outlet />
+          </div>
+        </main>
       </div>
     </div>
   );

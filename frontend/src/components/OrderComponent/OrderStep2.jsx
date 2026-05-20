@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import AddressAutocomplete from "../AddressAutocomplete";
 import { fetchAllCustomers } from "../../API/customer/customerApi";
 import { FiX } from "react-icons/fi";
@@ -9,13 +9,7 @@ function OrderStep2({ orderData, setOrderData, setCurrentStep }) {
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
 
-  useEffect(() => {
-    if (customerOption === "existing") {
-      fetchCustomers();
-    }
-  }, [searchTerm, customerOption]);
-
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     setIsLoadingCustomers(true);
     try {
       const res = await fetchAllCustomers(1, 1000, searchTerm);
@@ -27,7 +21,13 @@ function OrderStep2({ orderData, setOrderData, setCurrentStep }) {
     } finally {
       setIsLoadingCustomers(false);
     }
-  };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (customerOption === "existing") {
+      fetchCustomers();
+    }
+  }, [customerOption, fetchCustomers]);
 
   const handleCustomerChange = (e) => {
     setOrderData({

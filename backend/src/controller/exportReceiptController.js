@@ -2,8 +2,16 @@ const exportReceiptService = require("../services/exportReceiptService");
 
 const getAll = async (req, res) => {
   try {
-    const receipts = await exportReceiptService.getAllExportReceipts();
-    res.status(200).json({ success: true, data: receipts });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
+
+    const result = await exportReceiptService.getAllExportReceipts({
+      page,
+      limit,
+      search,
+    });
+    res.status(200).json({ success: true, ...result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

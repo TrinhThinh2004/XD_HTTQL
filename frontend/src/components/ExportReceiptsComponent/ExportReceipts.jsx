@@ -5,14 +5,25 @@ import {
   updateExportReceipt,
   deleteExportReceipt,
 } from "../../API/exportReceiptsApi/exportReceiptsApi";
-import { FiEdit, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+import ConfirmModal from "../common/ConfirmModal";
+
+import Pagination from "../common/Pagination";
+import Input from "../common/Input";
 
 export default function ExportReceiptsTable() {
   const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedReceiptId, setSelectedReceiptId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const itemsPerPage = 10;
+
   const [form, setForm] = useState({
     userId: "",
     export_date: "",
@@ -28,12 +39,19 @@ export default function ExportReceiptsTable() {
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
 
-  const loadData = () => {
+  const loadData = (page = currentPage, search = searchQuery) => {
     setLoading(true);
-    fetchExportReceipts()
+    fetchExportReceipts({
+      page,
+      limit: itemsPerPage,
+      search,
+    })
       .then((res) => {
-        const arr = Array.isArray(res.data) ? res.data : res.data.data;
-        setReceipts(arr || []);
+        if (res.data.success) {
+          setReceipts(res.data.receipts || []);
+          setTotalPages(res.data.totalPages || 1);
+          setCurrentPage(res.data.currentPage || 1);
+        }
       })
       .catch((err) => {
         console.error("Lỗi tải dữ liệu:", err);
@@ -45,6 +63,18 @@ export default function ExportReceiptsTable() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setCurrentPage(1);
+    loadData(1, value);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    loadData(page, searchQuery);
+  };
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -130,34 +160,28 @@ export default function ExportReceiptsTable() {
     openModal();
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa phiếu xuất này?")) {
-      deleteExportReceipt(id)
-        .then(() => {
-          loadData();
-          toast.success("Xóa phiếu xuất thành công!");
-        })
-        .catch(() => toast.error("Xóa phiếu xuất thất bại!"));
-    }
-  };
-
-  if (loading)
-    return (
-      <div className="text-center py-6 text-gray-500">Đang tải dữ liệu...</div>
-    );
-
   return (
     <div className="p-6 bg-blue-50 min-h-screen">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-textPrimary mb-6">
           Danh sách phiếu xuất
         </h1>
-        <button
-          onClick={openModal}
-          className="flex items-center gap-2 px-5 py-2 rounded-lg text-white bg-gradient-to-r from-[#00BFFF] to-[#87CEFA] hover:scale-105 transition-transform duration-200"
-        >
-          <FiPlus /> Thêm mới
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="w-80">
+            <Input
+              placeholder="Tìm kiếm lý do, ghi chú..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              icon={<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>}
+            />
+          </div>
+          <button
+            onClick={openModal}
+            className="flex items-center gap-2 px-5 py-2 rounded-lg text-white bg-gradient-to-r from-[#00BFFF] to-[#87CEFA] hover:scale-105 transition-transform duration-200"
+          >
+            <FiPlus /> Thêm mới
+          </button>
+        </div>
       </div>
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="overflow-x-auto rounded-lg border border-gray-200 mb-4">
@@ -189,79 +213,132 @@ export default function ExportReceiptsTable() {
             </thead>
 
             <tbody className="bg-white divide-y divide-gray-200">
-              {receipts.map((r) => (
-                <tr
-                  key={r.id}
-                  className="hover:bg-gray-50 transition-colors duration-200"
-                >
-                  <td className="px-6 py-4 text-sm text-gray-700 text-center">
-                    {r.id}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-800">
-                    {r.userData?.firstName ||
-                      r.userData?.email ||
-                      `User ID: ${r.userId}`}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-800">
-                    {new Date(r.export_date).toLocaleDateString("vi-VN")}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-800">
-                    {r.reason}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-800">{r.note}</td>
-                  <td className="px-6 py-4 text-sm text-gray-800">
-                    {r.exportDetailData?.length > 0 ? (
-                      <ul className="list-disc pl-4 max-h-60 overflow-y-auto space-y-2 text-black">
-                        {r.exportDetailData.map((d) => (
-                          <li
-                            key={d.id}
-                            className="pb-2 border-b last:border-b-0"
-                          >
-                            <div>
-                              <strong>SP:</strong>{" "}
-                              {d.StockProductData?.name || d.productId}
-                            </div>
-                            <div>
-                              <strong>Loại:</strong> {d.StockProductData?.type}
-                            </div>
-                            <div>
-                              <strong>Danh mục:</strong>{" "}
-                              {d.StockProductData?.category}
-                            </div>
-                            <div>
-                              <strong>Số lượng xuất:</strong> {d.quantity}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span className="text-gray-500">Không có sản phẩm</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-800 text-center">
-                    <div className="flex justify-center space-x-3">
-                      <button
-                        onClick={() => handleEdit(r)}
-                        className="p-1 text-primary hover:text-blue-500 transition-colors rounded"
-                      >
-                        <FiEdit className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(r.id)}
-                        className="p-1 text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        <FiTrash2 className="w-5 h-5" />
-                      </button>
-                    </div>
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
+                    Đang tải dữ liệu...
                   </td>
                 </tr>
-              ))}
+              ) : receipts.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
+                    Không tìm thấy phiếu xuất nào
+                  </td>
+                </tr>
+              ) : (
+                receipts.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <td className="px-6 py-4 text-sm text-gray-700 text-center">
+                      {r.id}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      {r.userData?.firstName ||
+                        r.userData?.email ||
+                        `User ID: ${r.userId}`}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      {new Date(r.export_date).toLocaleDateString("vi-VN")}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      {r.reason}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-800">{r.note}</td>
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      {r.exportDetailData?.length > 0 ? (
+                        <ul className="list-disc pl-4 max-h-60 overflow-y-auto space-y-2 text-black">
+                          {r.exportDetailData.map((d) => (
+                            <li
+                              key={d.id}
+                              className="pb-2 border-b last:border-b-0"
+                            >
+                              <div>
+                                <strong>SP:</strong>{" "}
+                                {d.StockProductData?.name || d.productId}
+                              </div>
+                              <div>
+                                <strong>Loại:</strong> {d.StockProductData?.type}
+                              </div>
+                              <div>
+                                <strong>Danh mục:</strong>{" "}
+                                {d.StockProductData?.category}
+                              </div>
+                              <div>
+                                <strong>Số lượng xuất:</strong> {d.quantity}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span className="text-gray-500">Không có sản phẩm</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-800 text-center">
+                      <div className="flex justify-center space-x-3">
+                        <button
+                          onClick={() => handleEdit(r)}
+                          className="p-1.5 text-blue-600 hover:text-blue-700 transition-all rounded-lg hover:bg-blue-100/50 active:scale-90"
+                          title="Chỉnh sửa"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedReceiptId(r.id);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="p-1 text-rose-600 hover:text-rose-800 transition-colors rounded hover:bg-rose-50"
+                        >
+                          <FiTrash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+
+        <ConfirmModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={() => {
+            deleteExportReceipt(selectedReceiptId)
+              .then(() => {
+                loadData();
+                toast.success("Xóa phiếu xuất thành công!");
+              })
+              .catch(() => toast.error("Xóa phiếu xuất thất bại!"));
+          }}
+          title="Xác nhận xóa phiếu xuất"
+          message="Bạn có chắc chắn muốn xóa phiếu xuất này? Tất cả chi tiết liên quan cũng sẽ bị xóa."
+        />
+
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-start pt-10 z-50 overflow-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center p-4 z-50 overflow-auto">
             <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100">
               <h3 className="text-xl font-bold mb-6 text-sky-700 text-center">
                 {isEditing ? "Cập nhật phiếu xuất" : "Thêm phiếu xuất"}

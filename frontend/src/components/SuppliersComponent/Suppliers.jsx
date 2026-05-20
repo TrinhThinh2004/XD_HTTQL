@@ -1,12 +1,4 @@
-import React, { useEffect, useState } from "react";
-import {
-  FiEdit,
-  FiTrash2,
-  FiSearch,
-  FiPlus,
-  FiChevronLeft,
-  FiChevronRight,
-} from "react-icons/fi";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { toast } from "react-toastify";
 import {
   getAllSuppliers,
@@ -16,11 +8,23 @@ import {
 } from "../../API/suppliersApi/suppliersApi";
 import { useSelector } from "react-redux";
 
+// Common Components
+import Button from '../common/Button';
+import Input from '../common/Input';
+import Table from '../common/Table';
+import Pagination from '../common/Pagination';
+import Card from '../common/Card';
+import Modal from '../common/Modal';
+import ConfirmModal from '../common/ConfirmModal';
+
 function SuppliersPage() {
   const currentUser = useSelector((state) => state.user.currentUser);
 
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [form, setForm] = useState({
     name: "",
     phoneNumber: "",
@@ -33,30 +37,29 @@ function SuppliersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
   const [totalPages, setTotalPages] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchSuppliers = async () => {
-    setLoading(true);
-    try {
-      const res = await getAllSuppliers({
-        page: currentPage,
-        limit: itemsPerPage,
-        search: searchTerm,
-      });
-      setSuppliers(res.suppliers || []);
-      setTotalPages(res.totalPages || 1);
-    } catch (error) {
-      toast.error(error.message || "Failed to fetch suppliers");
-      setSuppliers([]);
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchSuppliers = useCallback(async () => {
+      setLoading(true);
+      try {
+        const res = await getAllSuppliers({
+          page: currentPage,
+          limit: itemsPerPage,
+          search: searchTerm,
+        });
+        setSuppliers(res.suppliers || []);
+        setTotalPages(res.totalPages || 1);
+      } catch (error) {
+        toast.error(error.message || "Failed to fetch suppliers");
+        setSuppliers([]);
+        setTotalPages(1);
+      } finally {
+        setLoading(false);
+      }
+    }, [currentPage, itemsPerPage, searchTerm]);
 
-  useEffect(() => {
-    fetchSuppliers();
-  }, [currentPage, searchTerm]);
+    useEffect(() => {
+      fetchSuppliers();
+    }, [fetchSuppliers]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,9 +71,6 @@ function SuppliersPage() {
         await createSupplier(form);
         toast.success("Thêm nhà cung cấp thành công");
       }
-      setForm({ name: "", phoneNumber: "", address: "", description: "" });
-      setIsEditing(false);
-      setEditId(null);
       setIsModalOpen(false);
       fetchSuppliers();
     } catch (error) {
@@ -90,261 +90,198 @@ function SuppliersPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async () => {
+    if (!selectedSupplier) return;
+    try {
+      await deleteSupplier(selectedSupplier.id);
+      toast.success("Xóa thành công");
+      fetchSuppliers();
+    } catch (error) {
+      toast.error(error.message || "Xóa thất bại");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setSelectedSupplier(null);
+    }
+  };
+
+  const confirmDelete = (supplier) => {
     if (currentUser.role !== "admin") {
-      toast.warning("Liên hệ quản lý!");
+      toast.warning("Chỉ Admin mới có quyền xóa!");
       return;
     }
-    if (window.confirm("Bạn có chắc muốn xóa nhà cung cấp này?")) {
-      try {
-        await deleteSupplier(id);
-        toast.success("Xóa thành công");
-        fetchSuppliers();
-      } catch (error) {
-        toast.error(error.message || "Xóa thất bại");
-      }
-    }
+    setSelectedSupplier(supplier);
+    setIsDeleteModalOpen(true);
   };
 
-  const goToPage = (page) => {
-    if (page < 1) page = 1;
-    if (page > totalPages) page = totalPages;
-    setCurrentPage(page);
-  };
+  const columns = [
+    {
+      title: 'ID',
+      key: 'id',
+      className: 'w-16 text-center',
+    },
+    {
+      title: 'Nhà cung cấp',
+      key: 'name',
+      render: (name) => <span className="font-bold text-textPrimary">{name}</span>
+    },
+    {
+      title: 'Số điện thoại',
+      key: 'phoneNumber',
+      render: (phone) => phone || "-"
+    },
+    {
+      title: 'Địa chỉ',
+      key: 'address',
+      render: (address) => <div className="max-w-xs truncate text-xs text-textSecondary" title={address}>{address || "-"}</div>
+    },
+    {
+      title: 'Mô tả',
+      key: 'description',
+      render: (desc) => <div className="max-w-xs truncate italic text-textSecondary">{desc || "-"}</div>
+    },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      className: 'text-right',
+      render: (_, supplier) => (
+        <div className="flex justify-end space-x-1">
+          <Button 
+            variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-100/50 hover:text-blue-700 transition-all rounded-lg active:scale-90"
+            onClick={() => handleEdit(supplier)}
+            title="Sửa"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </Button>
+          <Button 
+            variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-50 transition-colors"
+            onClick={() => confirmDelete(supplier)}
+            title="Xóa"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          </Button>
+        </div>
+      )
+    }
+  ];
 
   return (
-    <div className="p-6 bg-blue-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-textPrimary mb-6">
-        Quản lý nhà cung cấp
-      </h1>
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-          <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 w-full max-w-sm bg-gray-50">
-            <FiSearch className="text-gray-400 mr-2" />
-            <input
-              type="text"
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-textPrimary tracking-tight">
+            Nhà Cung Cấp
+          </h1>
+          <p className="text-textSecondary mt-1">Quản lý các đối tác và nguồn cung hàng hóa</p>
+        </div>
+        
+        <Button 
+          variant="gradient" 
+          size="lg"
+          onClick={() => {
+            setForm({ name: "", phoneNumber: "", address: "", description: "" });
+            setIsEditing(false);
+            setIsModalOpen(true);
+          }}
+          leftIcon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>}
+        >
+          Thêm nhà cung cấp
+        </Button>
+      </div>
+
+      <Card>
+        <div className="flex justify-end mb-6">
+          <div className="w-full md:w-80">
+            <Input
               placeholder="Tìm kiếm nhà cung cấp..."
-              className="flex-1 outline-none bg-gray-50 text-gray-700"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
+              icon={<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>}
             />
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => {
-                setForm({
-                  name: "",
-                  phoneNumber: "",
-                  address: "",
-                  description: "",
-                });
-                setIsEditing(false);
-                setIsModalOpen(true);
-              }}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg text-white bg-gradient-to-r from-[#00BFFF] to-[#87CEFA] hover:scale-105 transition-transform duration-200"
-            >
-              <FiPlus /> Thêm nhà cung cấp
-            </button>
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex flex-col items-center py-12">
-            <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-3"></div>
-            <span className="text-gray-500">Đang tải danh sách...</span>
+        <Table 
+          columns={columns} 
+          data={suppliers} 
+          loading={loading} 
+          emptyMessage="Không có nhà cung cấp nào."
+        />
+
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={setCurrentPage} 
+        />
+      </Card>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={isEditing ? "Cập nhật nhà cung cấp" : "Thêm nhà cung cấp mới"}
+        size="md"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Hủy</Button>
+            <Button variant="gradient" onClick={handleSubmit}>
+              {isEditing ? "Cập nhật" : "Lưu đối tác"}
+            </Button>
           </div>
-        ) : suppliers.length === 0 ? (
-          <p className="text-center py-12 text-gray-400 text-lg">
-            Không có nhà cung cấp nào.
-          </p>
-        ) : (
-          <>
-            <div className="overflow-x-auto rounded-lg border border-gray-200 mb-4">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tên
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      SĐT
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Địa chỉ
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Mô tả
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Hành động
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {suppliers.map((supplier) => (
-                    <tr
-                      key={supplier.id}
-                      className="hover:bg-gray-50 transition-colors duration-200"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
-                        {supplier.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {supplier.name || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {supplier.phoneNumber || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {supplier.address || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {supplier.description || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                        <div className="flex justify-center space-x-3">
-                          <button
-                            onClick={() => handleEdit(supplier)}
-                            className="p-1 text-primary hover:text-blue-500 transition-colors rounded"
-                            title="Sửa nhà cung cấp"
-                          >
-                            <FiEdit className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(supplier.id)}
-                            className="p-1 text-red-500 hover:text-red-700 transition-colors"
-                            title="Xóa nhà cung cấp"
-                          >
-                            <FiTrash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex justify-center gap-2 mt-5 flex-wrap">
-              <button
-                onClick={() => goToPage(1)}
-                disabled={currentPage === 1}
-                className="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Trang đầu
-              </button>
-              <button
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FiChevronLeft size={18} />
-              </button>
-
-              {Array.from({ length: totalPages }, (_, index) => {
-                const pageNumber = index + 1;
-                return (
-                  <button
-                    key={pageNumber}
-                    onClick={() => goToPage(pageNumber)}
-                    className={`px-3 py-1 border border-gray-300 rounded-md transition-colors ${
-                      currentPage === pageNumber
-                        ? "bg-gradient-to-r from-[#00BFFF] to-[#87CEFA] text-white shadow"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    {pageNumber}
-                  </button>
-                );
-              })}
-
-              <button
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FiChevronRight size={18} />
-              </button>
-              <button
-                onClick={() => goToPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Trang cuối
-              </button>
-            </div>
-          </>
-        )}
-
-        {isModalOpen && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-            <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md transform transition-transform duration-300 scale-100">
-              <h2 className="text-xl font-semibold mb-5 text-gray-700">
-                {isEditing ? "Cập nhật nhà cung cấp" : "Thêm nhà cung cấp"}
-              </h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Tên nhà cung cấp"
-                  className="border p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-300 outline-none"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Số điện thoại"
-                  className="border p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-300 outline-none"
-                  value={form.phoneNumber}
-                  onChange={(e) =>
-                    setForm({ ...form, phoneNumber: e.target.value })
-                  }
-                />
-                <input
-                  type="text"
-                  placeholder="Địa chỉ"
-                  className="border p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-300 outline-none"
-                  value={form.address}
-                  onChange={(e) =>
-                    setForm({ ...form, address: e.target.value })
-                  }
-                />
-                <input
-                  type="text"
-                  placeholder="Mô tả"
-                  className="border p-3 rounded-lg w-full focus:ring-2 focus:ring-blue-300 outline-none"
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                />
-                <div className="flex justify-end gap-3 mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-5 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 transition-colors"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-lg text-white bg-gradient-to-r from-[#00BFFF] to-[#87CEFA] hover:scale-105 transition-transform duration-200"
-                  >
-                    {isEditing ? "Cập nhật" : "Thêm"}
-                  </button>
-                </div>
-              </form>
-            </div>
+        }
+      >
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <Input
+            label="Tên nhà cung cấp"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+            placeholder="Nhập tên doanh nghiệp/cá nhân"
+          />
+          <Input
+            label="Số điện thoại"
+            value={form.phoneNumber}
+            onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+            placeholder="09xx xxx xxx"
+          />
+          <Input
+            label="Địa chỉ"
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            placeholder="Địa chỉ trụ sở"
+          />
+          <div className="flex flex-col space-y-1">
+            <label className="text-sm font-semibold text-textPrimary">Ghi chú / Mô tả</label>
+            <textarea
+              className="w-full rounded-lg border border-border bg-white px-4 py-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary min-h-[100px]"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Thông tin thêm về nhà cung cấp..."
+            />
           </div>
-        )}
-      </div>
+        </form>
+      </Modal>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa nhà cung cấp"
+        message={`Bạn có chắc muốn xóa nhà cung cấp "${selectedSupplier?.name}"? Hành động này không thể hoàn tác.`}
+      />
     </div>
   );
 }

@@ -1,34 +1,42 @@
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import axiosInstance from "../utils/axiosInstance";
 
 const getAllInventory = async (page = 1, limit = 10) => {
-  const response = await axios.get(`${API_URL}/api/v1/inventory`, {
+  const response = await axiosInstance.get(`/inventory`, {
     params: { page, limit }
   });
   return response.data;
 };
 
 const createInventoryLog = async (logData) => {
-  const response = await axios.post(
-    `${API_URL}/api/v1/inventory/create`,
+  const response = await axiosInstance.post(
+    `/inventory/create`,
     logData
   );
   return response.data;
 };
 
 const editInventoryLog = async (id, logData) => {
-  const response = await axios.put(
-    `${API_URL}/api/v1/inventory/edit/${id}`,
+  const response = await axiosInstance.put(
+    `/inventory/edit/${id}`,
     logData
   );
   return response.data;
 };
 
 const deleteInventoryLog = async (id) => {
-  const response = await axios.delete(
-    `${API_URL}/api/v1/inventory/delete/${id}`
+  const response = await axiosInstance.delete(
+    `/inventory/delete/${id}`
   );
+  return response.data;
+};
+
+const getLowStock = async () => {
+  const response = await axiosInstance.get(`/inventory/low-stock`);
+  return response.data;
+};
+
+const getInventoryLogs = async (params = {}) => {
+  const response = await axiosInstance.get(`/inventory/logs`, { params });
   return response.data;
 };
 
@@ -36,5 +44,7 @@ export {
   getAllInventory,
   createInventoryLog,
   editInventoryLog,
-  deleteInventoryLog
+  deleteInventoryLog,
+  getLowStock,
+  getInventoryLogs
 };

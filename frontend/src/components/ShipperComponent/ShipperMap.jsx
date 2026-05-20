@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup,useMap } from "react-leaflet";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -12,44 +12,68 @@ L.Icon.Default.mergeOptions({
   shadowUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
+
 function FocusHandler({ shippers, focusId }) {
   const map = useMap();
 
   useEffect(() => {
     if (!focusId) return;
 
-    const shipper = shippers.find((s) => s.id === focusId);
-    if (shipper && shipper.lat && shipper.lng) {
-      map.flyTo([shipper.lat, shipper.lng], 15, { duration: 1 });
+    const shipperId = typeof focusId === 'object' ? focusId.id : focusId;
+    const shipper = shippers.find((s) => s.id === shipperId);
+    
+    if (shipper) {
+      const lat = parseFloat(shipper.lat);
+      const lng = parseFloat(shipper.lng);
+      
+      if (!isNaN(lat) && !isNaN(lng)) {
+        map.flyTo([lat, lng], 15, { duration: 1 });
+      }
     }
   }, [focusId, shippers, map]);
 
   return null;
 }
-function ShipperMap({ shippers = [] , focusId}) {
+
+function ShipperMap({ shippers = [], focusId }) {
   const [filter, setFilter] = useState("all"); // 'all', 'available', 'delivering'
-  const markerRefs = useRef({});
   const [mapCenter, setMapCenter] = useState([10.762622, 106.660172]);
-  const validShippers = Array.isArray(shippers)
-    ? shippers.filter(
-        (s) => s && typeof s.lat === "number" && typeof s.lng === "number"
-      )
-    : [];
-  const filteredShippers =
-    filter === "all"
+  
+  const validShippers = useMemo(() => {
+    if (!Array.isArray(shippers)) return [];
+    return shippers.filter((s) => {
+      if (!s) return false;
+      const lat = parseFloat(s.lat);
+      const lng = parseFloat(s.lng);
+      return !isNaN(lat) && !isNaN(lng);
+    });
+  }, [shippers]);
+
+  const filteredShippers = useMemo(() => {
+    return filter === "all"
       ? validShippers
       : validShippers.filter((s) => s.status === filter);
+  }, [validShippers, filter]);
 
   useEffect(() => {
     if (focusId) {
-      const shipper = shippers.find(s => s.id === focusId);
-      if (shipper?.lat && shipper?.lng) {
-        setMapCenter([shipper.lat, shipper.lng]);
+      const shipperId = typeof focusId === 'object' ? focusId.id : focusId;
+      const shipper = shippers.find(s => s.id === shipperId);
+      const lat = parseFloat(shipper?.lat);
+      const lng = parseFloat(shipper?.lng);
+      
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setMapCenter([lat, lng]);
       }
-    } else if (shippers.length > 0 && shippers[0]?.lat && shippers[0]?.lng) {
-      setMapCenter([shippers[0].lat, shippers[0].lng]);
+    } else if (validShippers.length > 0) {
+      const first = validShippers[0];
+      const lat = parseFloat(first.lat);
+      const lng = parseFloat(first.lng);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setMapCenter([lat, lng]);
+      }
     }
-  }, [shippers, focusId]);
+  }, [shippers, focusId, validShippers]);
 
   const createCustomIcon = (status) => {
     const color = status === "delivering" ? "#FFD700" : "#00BFFF";
@@ -109,37 +133,36 @@ function ShipperMap({ shippers = [] , focusId}) {
         </div>
 
         <div className="relative h-80 bg-gray-100 rounded-lg overflow-hidden mb-4">
-        <MapContainer
-          center={mapCenter}
-          zoom={13}
-          style={{ height: "100%", width: "100%", zIndex: 0 }}
-          whenCreated={(map) => { mapRef.current = map }}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
-          
-          <FocusHandler shippers={shippers} focusId={focusId} />
-          
-          {filteredShippers.map((shipper) => (
-            <Marker
-              key={shipper.id}
-              position={[shipper.lat, shipper.lng]}
-              icon={createCustomIcon(shipper.status)}
-            >
-              <Popup>
-                <div>
-                  <strong>{shipper.name}</strong>
-                  <p>SĐT: {shipper.phoneNumber}</p>
-                  <p>Trạng thái: {shipper.status === "delivering" ? "Đang giao" : "Sẵn sàng"}</p>
-                  <p>Địa chỉ: {shipper.address}</p>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
-      </div>
+          <MapContainer
+            center={mapCenter}
+            zoom={13}
+            style={{ height: "100%", width: "100%", zIndex: 0 }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            
+            <FocusHandler shippers={shippers} focusId={focusId} />
+            
+            {filteredShippers.map((shipper) => (
+              <Marker
+                key={shipper.id}
+                position={[parseFloat(shipper.lat), parseFloat(shipper.lng)]}
+                icon={createCustomIcon(shipper.status)}
+              >
+                <Popup>
+                  <div>
+                    <strong>{shipper.name}</strong>
+                    <p>SĐT: {shipper.phoneNumber}</p>
+                    <p>Trạng thái: {shipper.status === "delivering" ? "Đang giao" : "Sẵn sàng"}</p>
+                    <p>Địa chỉ: {shipper.address}</p>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
 
         <div className="bg-white rounded-md p-2 shadow-sm flex justify-center space-x-6">
           <div className="flex items-center space-x-2">
@@ -159,4 +182,5 @@ function ShipperMap({ shippers = [] , focusId}) {
     </div>
   );
 }
+
 export default ShipperMap;

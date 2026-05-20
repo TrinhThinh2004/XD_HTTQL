@@ -338,7 +338,7 @@ function OrderStep1({
                       <td className="px-6 py-4 text-center whitespace-nowrap">
                         <button
                           onClick={() => removeProductFromOrder(index)}
-                          className="text-red-500 hover:text-red-700 p-1"
+                          className="text-rose-600 hover:text-rose-800 p-1 hover:bg-rose-50 rounded transition-colors"
                           title="Xóa khỏi đơn"
                         >
                           <svg

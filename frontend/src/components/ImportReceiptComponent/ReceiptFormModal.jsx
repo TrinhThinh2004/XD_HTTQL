@@ -20,8 +20,8 @@ export default function ReceiptFormModal({
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-start pt-16 z-50 overflow-auto">
-      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-3xl relative border border-gray-100">
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center p-4 z-50 overflow-auto">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-3xl relative border border-gray-100 max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 left-4 flex items-center gap-1 text-gray-600 hover:text-gray-800 font-medium transition"
