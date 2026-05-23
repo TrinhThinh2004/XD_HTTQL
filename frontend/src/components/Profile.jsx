@@ -223,160 +223,160 @@ const Profile = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-y-8 animate-in fade-in duration-700 pb-10">
-      {/* Header Banner */}
-      <div className="relative h-64 w-full rounded-[3rem] overflow-hidden shadow-soft-2xl border border-white/20 dark:border-white/10">
+    <div className="flex flex-col gap-y-4 animate-in fade-in duration-700 pb-8">
+      {/* Ultra-Compact Header Banner */}
+      <div className="relative h-32 w-full rounded-[1.5rem] overflow-hidden shadow-md border border-white/20 dark:border-white/10">
         <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-light to-accent opacity-90 dark:opacity-80" />
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20" />
         
         {/* Back Button */}
         <button 
           onClick={() => navigate(-1)}
-          className="absolute top-6 left-6 z-10 p-3 rounded-2xl bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-all duration-300 border border-white/20 active:scale-90 shadow-lg group"
+          className="absolute top-3 left-3 z-10 p-2 rounded-lg bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-all duration-300 border border-white/20 active:scale-90 shadow-sm"
           title="Quay lại"
         >
-          <FiArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+          <FiArrowLeft size={16} />
         </button>
 
-        {/* Animated Orbs */}
-        <div className="absolute top-10 right-20 size-32 bg-white/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-10 left-10 w-48 h-48 bg-accent/20 rounded-full blur-3xl animate-bounce duration-[10000ms]" />
-
-        <div className="absolute bottom-8 left-10 flex items-end gap-x-6">
+        <div className="absolute bottom-4 left-6 flex items-end gap-x-4">
           <div className="relative group">
-            <div className="size-32 rounded-[2.5rem] overflow-hidden border-4 border-white dark:border-dark-border shadow-2xl bg-bg-subtle dark:bg-dark-card relative transition-transform duration-500 group-hover:scale-105">
+            <div className="size-20 rounded-2xl overflow-hidden border-2 border-white dark:border-dark-border shadow-lg bg-bg-subtle dark:bg-dark-card relative transition-transform duration-500 hover:scale-105">
               {avatarPreview ? (
                 <img src={avatarPreview} alt="avatar" className="size-full object-cover" />
               ) : (
-                <div className="size-full flex items-center justify-center text-primary bg-primary/10 font-black text-3xl uppercase">
+                <div className="size-full flex items-center justify-center text-primary bg-primary/10 font-black text-xl uppercase">
                   {user.firstName?.[0]}{user.lastName?.[0]}
                 </div>
               )}
               <label htmlFor="avatarInput" className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer backdrop-blur-sm">
-                <FiCamera size={24} className="text-white" />
+                <FiCamera size={18} className="text-white" />
               </label>
             </div>
             <input id="avatarInput" type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </div>
-          <div className="pb-2 text-white">
-            <h1 className="text-3xl font-semibold tracking-tighter uppercase leading-none mb-2">
+          <div className="pb-0.5 text-white">
+            <h1 className="text-xl font-bold tracking-tight uppercase leading-none mb-1">
               {user.firstName} {user.lastName}
             </h1>
-            <div className="flex items-center gap-x-3">
-              <Badge variant="neutral" className="bg-white/20 border-white/30 text-white text-[10px] backdrop-blur-md">
+            <div className="flex items-center gap-x-2">
+              <Badge variant="neutral" className="bg-white/10 border-white/20 text-white text-[8px] py-0 px-1.5 backdrop-blur-md uppercase font-black">
                 {user.role || "Thành viên"}
               </Badge>
-              <div className="flex items-center text-white/80 text-xs font-bold tracking-tight">
-                <FiMail className="mr-1.5" /> {user.email}
-              </div>
+              <span className="text-white/80 text-[10px] font-medium flex items-center">
+                <FiMail className="mr-1" size={10} /> {user.email}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="flex flex-col gap-y-6">
-          <Card title="Trung tâm điều khiển" className="shadow-soft-xl">
-            <div className="flex flex-col gap-y-2">
-              {controlItems.map((item, i) => (
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Left column: Actions & Stats */}
+        <div className="lg:col-span-4 flex flex-col gap-y-4">
+          <Card title="Chức năng" className="shadow-sm py-2 px-3">
+            <div className="flex flex-col gap-y-0.5">
+              {controlItems.map((item) => (
                 <button 
                   key={item.label} 
                   onClick={() => {
                     if (item.path) navigate(item.path);
                     if (item.action) item.action();
                   }}
-                  className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-bg-subtle dark:hover:bg-white/[0.03] transition-all group text-left"
+                  className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-bg-subtle dark:hover:bg-white/[0.03] transition-all group text-left"
                 >
-                  <div className="flex items-center gap-x-3">
-                    <span className={cn("size-5", item.color)}>{item.icon}</span>
-                    <span className="text-[11px] font-black text-text-primary uppercase tracking-tighter">{item.label}</span>
+                  <div className="flex items-center gap-x-2.5">
+                    <span className={cn("size-3.5", item.color)}>{item.icon}</span>
+                    <span className="text-[10px] font-bold text-text-primary uppercase tracking-tight">{item.label}</span>
                   </div>
-                  <svg className="size-4 text-text-tertiary group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-                  </svg>
+                  <FiArrowUpRight className="size-3 text-text-tertiary opacity-0 group-hover:opacity-100 transition-all" />
                 </button>
               ))}
             </div>
           </Card>
 
-          <div className="bg-gradient-to-br from-primary/10 to-accent/5 p-8 rounded-[2.5rem] border border-primary/10 dark:border-primary/5 relative overflow-hidden group shadow-soft-lg">
-            <div className="absolute top-0 right-0 size-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <h4 className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-4">Thống kê cá nhân</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white dark:bg-dark-card p-4 rounded-2xl border border-primary/10 dark:border-dark-border/40 shadow-sm">
-                <p className="text-[9px] font-black text-text-tertiary uppercase mb-1">Phiếu đã lập</p>
-                <p className="text-xl font-black text-text-primary">128</p>
+          <div className="bg-white dark:bg-dark-card p-4 rounded-[1.25rem] border border-border/40 dark:border-dark-border/40 shadow-sm relative overflow-hidden">
+            <h4 className="text-[9px] font-black text-text-tertiary uppercase tracking-widest mb-3 flex items-center">
+              <FiActivity className="mr-1.5 text-primary" size={10} /> Thống kê cá nhân
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-bg-light/50 dark:bg-white/[0.02] p-2.5 rounded-xl border border-border/20">
+                <p className="text-[7px] font-black text-text-tertiary uppercase mb-0.5">Phiếu lập</p>
+                <p className="text-base font-black text-text-primary">128</p>
               </div>
-              <div className="bg-white dark:bg-dark-card p-4 rounded-2xl border border-primary/10 dark:border-dark-border/40 shadow-sm">
-                <p className="text-[9px] font-black text-text-tertiary uppercase mb-1">Đơn hàng xử lý</p>
-                <p className="text-xl font-black text-text-primary">42</p>
+              <div className="bg-bg-light/50 dark:bg-white/[0.02] p-2.5 rounded-xl border border-border/20">
+                <p className="text-[7px] font-black text-text-tertiary uppercase mb-0.5">Đơn hàng</p>
+                <p className="text-base font-black text-text-primary">42</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-2">
-          <Card title="Cập nhật hồ sơ" extra={<FiUser className="text-primary" />}>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Right column: Update Form */}
+        <div className="lg:col-span-8">
+          <Card title="Chỉnh sửa thông tin" extra={<FiUser className="text-primary" size={14} />} className="h-full py-4 px-5">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   label="Họ"
                   value={user.firstName}
                   onChange={(e) => setUser(prev => ({ ...prev, firstName: e.target.value }))}
-                  placeholder="Họ người dùng"
+                  placeholder="Họ"
+                  className="py-2 text-[11px]"
                 />
                 <Input
                   label="Tên"
                   value={user.lastName}
                   onChange={(e) => setUser(prev => ({ ...prev, lastName: e.target.value }))}
-                  placeholder="Tên người dùng"
+                  placeholder="Tên"
+                  className="py-2 text-[11px]"
                 />
                 <Input
                   label="Số điện thoại"
                   value={user.phoneNumber}
                   onChange={(e) => setUser(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                  placeholder="09xx xxx xxx"
+                  placeholder="09xx..."
+                  className="py-2 text-[11px]"
                 />
                 <Input
-                  label="Email (Hệ thống)"
+                  label="Email"
                   value={user.email}
                   disabled
-                  placeholder="example@gmail.com"
-                  leftIcon={<FiMail />}
+                  leftIcon={<FiMail size={12} />}
+                  className="py-2 text-[11px]"
                 />
               </div>
 
-              <div className="flex flex-col gap-y-1.5">
-                <label className="text-[10px] font-black text-text-tertiary ml-2 uppercase tracking-widest flex items-center space-x-1">
-                  <span>Địa chỉ cư trú hiện tại</span>
-                  <div className="w-1 h-1 rounded-full bg-primary/40" />
+              <div className="flex flex-col gap-y-1">
+                <label className="text-[9px] font-black text-text-tertiary ml-1 uppercase tracking-widest flex items-center space-x-1">
+                  <span>Địa chỉ</span>
+                  <div className="w-1 h-1 rounded-full bg-primary/30" />
                 </label>
                 <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-primary transition-colors">
-                    <FiMapPin />
+                  <div className="absolute left-3.5 top-3 text-text-tertiary group-focus-within:text-primary transition-colors">
+                    <FiMapPin size={12} />
                   </div>
                   <textarea
                     value={user.address}
                     onChange={(e) => setUser(prev => ({ ...prev, address: e.target.value }))}
-                    rows="3"
-                    className="w-full pl-12 pr-5 py-3.5 bg-bg-subtle/30 dark:bg-dark-card/40 border border-border/50 dark:border-dark-border/60 text-text-primary text-xs rounded-2xl outline-none transition-all duration-300 focus:bg-white dark:focus:bg-dark-card focus:border-primary focus:ring-4 focus:ring-primary/5 font-bold shadow-inner-sm resize-none"
-                    placeholder="Nhập địa chỉ chi tiết…"
+                    rows="2"
+                    className="w-full pl-10 pr-4 py-2.5 bg-bg-subtle/30 dark:bg-dark-card/40 border border-border/50 dark:border-dark-border/60 text-text-primary text-[11px] rounded-xl outline-none transition-all duration-300 focus:bg-white dark:focus:bg-dark-card focus:border-primary focus:ring-2 focus:ring-primary/5 font-bold shadow-inner-sm resize-none"
+                    placeholder="Địa chỉ..."
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-6 border-t border-border/40 dark:border-dark-border/40">
-                <div className="flex items-center text-text-tertiary">
-                   <FiShield className="mr-2 text-success" />
-                   <span className="text-[10px] font-bold uppercase italic">* Dữ liệu được bảo mật toàn diện</span>
+              <div className="flex items-center justify-between pt-4 border-t border-border/40 dark:border-dark-border/40 mt-2">
+                <div className="flex items-center text-text-tertiary opacity-60">
+                   <FiShield className="mr-1.5 text-success" size={12} />
+                   <span className="text-[8px] font-bold uppercase italic">Dữ liệu an toàn</span>
                 </div>
                 <Button
                   type="submit"
                   isLoading={loading}
-                  className="h-12 px-10 shadow-primary/30 rounded-2xl"
-                  leftIcon={<FiSave />}
+                  size="sm"
+                  className="px-6 rounded-lg text-[10px]"
+                  leftIcon={<FiSave size={12} />}
                 >
-                  {loading ? "Đang lưu..." : "Lưu thay đổi"}
+                  Lưu thay đổi
                 </Button>
               </div>
             </form>

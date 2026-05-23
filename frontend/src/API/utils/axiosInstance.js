@@ -3,9 +3,10 @@ import store from "../../redux/store";
 import { login, resetUser } from "../../redux/slice/userSlice";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const baseURL = API_URL ? `${API_URL.replace(/\/$/, "")}/api/v1` : "/api/v1";
 
 const axiosInstance = axios.create({
-  baseURL: `${API_URL}/api/v1`,
+  baseURL: baseURL,
   withCredentials: true,
 });
 
@@ -47,8 +48,8 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 403 Forbidden (often used for expired token in this project based on backend changes)
-    if (error.response?.status === 403 && !originalRequest._retry) {
+    // Handle 401/403 (Unauthorized/Forbidden - often used for expired token)
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });

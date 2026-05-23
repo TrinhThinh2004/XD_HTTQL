@@ -31,10 +31,24 @@ function App() {
 
 	// Apply global theme
 	useEffect(() => {
-		if (user?.preferredTheme === 'dark') {
-			document.documentElement.classList.add('dark');
-		} else if (user?.preferredTheme === 'light') {
-			document.documentElement.classList.remove('dark');
+		// 1. Check user preference first
+		if (user?.preferredTheme) {
+			if (user.preferredTheme === 'dark') {
+				document.documentElement.classList.add('dark');
+				localStorage.setItem('theme', 'dark');
+			} else {
+				document.documentElement.classList.remove('dark');
+				localStorage.setItem('theme', 'light');
+			}
+		} 
+		// 2. Fallback to standalone theme key (for login/signup pages)
+		else {
+			const savedTheme = localStorage.getItem('theme');
+			if (savedTheme === 'dark') {
+				document.documentElement.classList.add('dark');
+			} else if (savedTheme === 'light') {
+				document.documentElement.classList.remove('dark');
+			}
 		}
 	}, [user?.preferredTheme]);
 

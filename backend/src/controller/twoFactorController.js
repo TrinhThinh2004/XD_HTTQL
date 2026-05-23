@@ -109,6 +109,7 @@ const verifyLogin2FA = async (req, res) => {
             const access_token = jwt.sign(
               {
                 id: user.id,
+                email: user.email,
                 role: user.role,
                 isAdmin: user.role === "admin",
               },
@@ -119,6 +120,7 @@ const verifyLogin2FA = async (req, res) => {
             const refresh_token = jwt.sign(
               {
                 id: user.id,
+                email: user.email,
                 role: user.role,
                 isAdmin: user.role === "admin",
               },

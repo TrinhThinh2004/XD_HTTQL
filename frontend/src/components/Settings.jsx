@@ -141,6 +141,7 @@ const Settings = () => {
           systemName: settings.systemName,
         };
         localStorage.setItem("user", JSON.stringify(updatedUser));
+        localStorage.setItem("theme", settings.theme);
         dispatch(login(updatedUser));
         
         toast.success("Lưu thay đổi thành công!");

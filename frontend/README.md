@@ -18,9 +18,9 @@ Giao diện quản trị kho hiện đại, trực quan và mạnh mẽ, đượ
 - **Quản lý Hàng hóa:** Giao diện lưới/danh sách linh hoạt, tích hợp QR Code.
 - **Quy trình Kho:** Luồng nghiệp vụ Nhập - Xuất - Chuyển kho mượt mà.
 - **Hệ thống Cài đặt:**
-    - Cấu hình 2FA và PIN bảo mật.
-    - Đổi Theme (Light/Dark) và Ngôn ngữ.
-    - Quản lý phiên đăng nhập (Sessions).
+  - Cấu hình 2FA và PIN bảo mật.
+  - Đổi Theme (Light/Dark) và Ngôn ngữ.
+  - Quản lý phiên đăng nhập (Sessions).
 - **Hệ thống Thông báo:** Nhận thông tin vận hành tức thì.
 
 ## 📁 Cấu trúc nguồn
@@ -39,12 +39,15 @@ src/
 ## 🛠️ Phát triển & Build
 
 ### 1. Cấu hình
+
 Tạo file `.env`:
+
 ```env
-VITE_API_URL=http://localhost:3001
+VITE_API_URL=http://localhost:8080
 ```
 
 ### 2. Chạy Local
+
 ```bash
 # Cài đặt
 npm install
@@ -54,9 +57,11 @@ npm run dev
 ```
 
 ### 3. Build Production
+
 ```bash
 npm run build
 ```
 
 ## 📱 Responsive & UI/UX
+
 Ứng dụng được tối ưu hiển thị trên nhiều kích thước màn hình, từ Laptop đến Máy tính bảng. Trải nghiệm người dùng được đặt lên hàng đầu với các hiệu ứng chuyển cảnh mượt mà và thông báo (Toast) phản hồi tức thì.

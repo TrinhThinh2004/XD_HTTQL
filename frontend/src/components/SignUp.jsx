@@ -65,11 +65,11 @@ const SignUp = () => {
         ></div>
       </div>
 
-      <div className="w-full max-w-md bg-white/70 dark:bg-dark-card/70 backdrop-blur-2xl shadow-soft-xl rounded-[2.5rem] p-10 border border-white/40 dark:border-dark-border/40 relative z-10 animate-in fade-in zoom-in-95 duration-700">
-        <div className="flex flex-col items-center mb-10">
-          <div className="size-20 bg-primary rounded-[2rem] flex items-center justify-center shadow-2xl shadow-primary/40 mb-6 transform -rotate-6 hover:rotate-0 transition-transform duration-500">
+      <div className="w-full max-w-sm bg-white/70 dark:bg-dark-card/70 backdrop-blur-2xl shadow-soft-xl rounded-[2rem] p-8 border border-white/40 dark:border-dark-border/40 relative z-10 animate-in fade-in zoom-in-95 duration-700">
+        <div className="flex flex-col items-center mb-8">
+          <div className="size-16 bg-primary rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-primary/40 mb-5 transform -rotate-6 hover:rotate-0 transition-transform duration-500">
             <svg
-              className="size-12 text-white"
+              className="size-10 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -82,16 +82,16 @@ const SignUp = () => {
               />
             </svg>
           </div>
-          <h1 className="text-4xl font-semibold text-text-primary tracking-tighter text-center leading-tight">
+          <h1 className="text-3xl font-semibold text-text-primary tracking-tighter text-center leading-tight">
             Tạo tài khoản <br />
           </h1>
-          <p className="text-text-secondary mt-3 font-semibold tracking-tight text-center">
+          <p className="text-text-secondary mt-2 text-xs font-semibold tracking-tight text-center">
             Gia nhập đội ngũ Smart WMS
           </p>
         </div>
 
         <form
-          className="flex flex-col gap-y-6"
+          className="flex flex-col gap-y-5"
           onSubmit={(e) => {
             e.preventDefault();
             handleSignUp();
@@ -105,9 +105,10 @@ const SignUp = () => {
             placeholder="name@company.com"
             required
             disabled={isLoading}
+            className="py-3 text-xs"
             leftIcon={
               <svg
-                className="size-5"
+                className="size-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -131,9 +132,10 @@ const SignUp = () => {
               placeholder="Nhập mật khẩu…"
               required
               disabled={isLoading}
+              className="py-3 text-xs"
               leftIcon={
                 <svg
-                  className="size-5"
+                  className="size-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -154,7 +156,7 @@ const SignUp = () => {
                 >
                   {showPassword ? (
                     <svg
-                      className="size-5"
+                      className="size-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -168,7 +170,7 @@ const SignUp = () => {
                     </svg>
                   ) : (
                     <svg
-                      className="size-5"
+                      className="size-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -201,9 +203,10 @@ const SignUp = () => {
               placeholder="Nhập lại mật khẩu…"
               required
               disabled={isLoading}
+              className="py-3 text-xs"
               leftIcon={
                 <svg
-                  className="size-5"
+                  className="size-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -224,7 +227,7 @@ const SignUp = () => {
                 >
                   {showConfirm ? (
                     <svg
-                      className="size-5"
+                      className="size-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -238,7 +241,7 @@ const SignUp = () => {
                     </svg>
                   ) : (
                     <svg
-                      className="size-5"
+                      className="size-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -263,28 +266,28 @@ const SignUp = () => {
           </div>
 
           {error && (
-            <div className="text-error text-xs font-black bg-error/10 p-4 rounded-2xl border border-error/20 animate-shake">
+            <div className="text-error text-[10px] font-black bg-error/10 p-3 rounded-xl border border-error/20 animate-shake">
               {error}
             </div>
           )}
 
           <Button
             type="submit"
-            className="w-full py-4 text-base font-black tracking-tight"
-            size="lg"
+            className="w-full py-3.5 text-sm font-black tracking-tight"
+            size="md"
             variant="primary"
             isLoading={isLoading}
           >
             Đăng ký tài khoản
           </Button>
 
-          <p className="text-sm text-center text-text-secondary font-medium mt-6">
+          <p className="text-xs text-center text-text-secondary font-medium mt-4">
             Bạn đã có tài khoản?{" "}
             <span
               onClick={() => navigate("/sign-in")}
               className="text-primary font-black hover:text-primary-dark transition-colors cursor-pointer"
             >
-              Đăng nhập ngay
+              Đăng nhập
             </span>
           </p>
         </form>

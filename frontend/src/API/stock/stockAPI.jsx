@@ -18,12 +18,12 @@ export const getStockById = async (id) => {
 };
 
 export const createStock = async (data) => {
-  const res = await axiosInstance.post(`/stock/create`, data);
+  const res = await axiosInstance.post(`/products/create`, data);
   return res.data;
 };
 
 export const updateStock = async (id, data) => {
-  const res = await axiosInstance.put(`/stock/edit/${id}`, data);
+  const res = await axiosInstance.put(`/stock/${id}`, data);
   return res.data;
 };
 

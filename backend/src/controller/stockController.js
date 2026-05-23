@@ -13,14 +13,14 @@ module.exports = {
         order: [["createdAt", "DESC"]],
       });
 
-      const baseUrl = "http://localhost:3001";
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
 
       const allProducts = stocks.map((p) => {
         const product = p.toJSON();
         return {
           ...product,
           image: product.image ? `${baseUrl}${product.image}` : null,
-          status: product.stock !== 0 ? "Còn hàng" : "Hết hàng",
+          status: product.stock > 0 ? "Còn hàng" : "Hết hàng",
           supplierName: product.supplier?.name || "Chưa có NCC"
         };
       });

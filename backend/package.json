@@ -2,6 +2,9 @@
   "name": "backend",
   "version": "3.5.0",
   "description": "Xay dung he thong thong tin quan ly",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "main": "service.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

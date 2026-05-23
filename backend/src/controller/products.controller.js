@@ -30,14 +30,14 @@ module.exports.getAllProducts = async (req, res) => {
       ]
     });
 
-    const baseUrl = 'http://localhost:3001';
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
 
     const allProducts = allProductsRaw.map(p => {
       const product = p.toJSON();
       return {
         ...product,
         image: product.image ? `${baseUrl}${product.image}` : null,
-        status: product.stock !== 0 ? 'Còn hàng' : 'Hết hàng'
+        status: product.stock > 0 ? 'Còn hàng' : 'Hết hàng'
       };
     });
 
@@ -46,7 +46,7 @@ module.exports.getAllProducts = async (req, res) => {
       return {
         ...product,
         image: product.image ? `${baseUrl}${product.image}` : null,
-        status: product.stock !== 0 ? 'Còn hàng' : 'Hết hàng'
+        status: product.stock > 0 ? 'Còn hàng' : 'Hết hàng'
       };
     });
 
@@ -99,7 +99,7 @@ module.exports.createProduct = async (req, res) => {
       unit,
       stock,
       price,
-      status: stock === 0 ? 'Còn hàng' : 'Hết hàng',
+      status: stock > 0 ? 'Còn hàng' : 'Hết hàng',
       image: imageUrl,
       minStock: minStock || 10,
       supplierId: supplierId || null

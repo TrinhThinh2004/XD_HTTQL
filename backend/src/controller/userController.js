@@ -55,6 +55,7 @@ const handleLoginUser = async (req, res) => {
     const access_token = jwt.sign(
       {
         id: userData.user.id,
+        email: userData.user.email,
         role: userData.user.role,
         isAdmin: userData.user.role === "admin",
       },
@@ -65,6 +66,7 @@ const handleLoginUser = async (req, res) => {
     const refresh_token = jwt.sign(
       {
         id: userData.user.id,
+        email: userData.user.email,
         role: userData.user.role,
         isAdmin: userData.user.role === "admin",
       },

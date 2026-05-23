@@ -28,6 +28,7 @@ function Header({ onOpenSidebar }) {
     // Update Local and Redux first for instant feel
     const updatedUser = { ...currentUser, preferredTheme: newTheme };
     localStorage.setItem("user", JSON.stringify(updatedUser));
+    localStorage.setItem("theme", newTheme);
     dispatch(login(updatedUser));
 
     // Persist to DB

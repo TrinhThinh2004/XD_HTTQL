@@ -21,11 +21,23 @@
       (function() {
         try {
           const userStr = localStorage.getItem('user');
+          const savedTheme = localStorage.getItem('theme');
+          
           if (userStr) {
             const user = JSON.parse(userStr);
             if (user.preferredTheme === 'dark') {
               document.documentElement.classList.add('dark');
+              return;
+            } else if (user.preferredTheme === 'light') {
+              document.documentElement.classList.remove('dark');
+              return;
             }
+          } 
+          
+          if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else if (savedTheme === 'light') {
+            document.documentElement.classList.remove('dark');
           } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
             // Default to system preference if no user setting
             document.documentElement.classList.add('dark');

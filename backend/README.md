@@ -32,9 +32,11 @@ src/
 ## 🛠️ Cài đặt & Triển khai
 
 ### 1. Biến môi trường (`.env`)
+
 Tạo file `.env` từ mẫu:
+
 ```env
-PORT=3001
+PORT=8080
 NODE_ENV=development
 
 # Database Configuration
@@ -49,6 +51,7 @@ JWT_SECRET=super_secret_key_change_me
 ```
 
 ### 2. Khởi động
+
 ```bash
 # Cài đặt thư viện
 npm install
@@ -63,12 +66,14 @@ npm start
 ## 📡 API Modules (Prefix: `/api/v1`)
 
 Hệ thống chia làm nhiều module độc lập:
+
 - **Hệ thống:** `/user`, `/notifications`, `/settings`, `/backup`.
 - **Nghiệp vụ Kho:** `/products`, `/stock`, `/inventory`, `/import-receipt`, `/export-receipt`.
 - **Đối tác:** `/customer`, `/suppliers`, `/shipper`, `/orders`.
 - **Bảo mật:** `/2fa`, `/pin`.
 
 ## 🗄️ Database Scripts
+
 - `npx sequelize-cli db:migrate`: Chạy migration mới.
 - `npx sequelize-cli db:migrate:undo`: Hoàn tác migration gần nhất.
 - `npx sequelize-cli db:seed:all`: Đổ dữ liệu mẫu (nếu có).

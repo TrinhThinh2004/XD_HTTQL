@@ -163,11 +163,11 @@ const SignIn = () => {
         ></div>
       </div>
 
-      <div className="w-full max-w-md bg-white/70 dark:bg-dark-card/70 backdrop-blur-2xl shadow-soft-xl rounded-[2.5rem] p-10 border border-white/40 dark:border-dark-border/40 relative z-10 animate-in fade-in zoom-in-95 duration-700">
-        <div className="flex flex-col items-center mb-10">
-          <div className="size-20 bg-primary rounded-[2rem] flex items-center justify-center shadow-2xl shadow-primary/40 mb-6 transform rotate-6 hover:rotate-0 transition-transform duration-500">
+      <div className="w-full max-w-sm bg-white/70 dark:bg-dark-card/70 backdrop-blur-2xl shadow-soft-xl rounded-[2rem] p-8 border border-white/40 dark:border-dark-border/40 relative z-10 animate-in fade-in zoom-in-95 duration-700">
+        <div className="flex flex-col items-center mb-8">
+          <div className="size-16 bg-primary rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-primary/40 mb-5 transform rotate-6 hover:rotate-0 transition-transform duration-500">
             <svg
-              className="size-12 text-white"
+              className="size-10 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -180,15 +180,15 @@ const SignIn = () => {
               />
             </svg>
           </div>
-          <h1 className="text-4xl font-semibold text-text-primary dark:text-dark-text-primary tracking-tighter text-center leading-tight">
+          <h1 className="text-3xl font-semibold text-text-primary dark:text-dark-text-primary tracking-tighter text-center leading-tight">
             Chào mừng <br /> quay trở lại!
           </h1>
-          <p className="text-text-secondary mt-3 font-semibold tracking-tight text-center">
+          <p className="text-text-secondary mt-2 text-xs font-semibold tracking-tight text-center">
             Đăng nhập vào Smart WMS v3.5.0
           </p>
         </div>
 
-        <form className="space-y-6" onSubmit={handleSignin}>
+        <form className="space-y-5" onSubmit={handleSignin}>
           <Input
             label="Địa chỉ Email"
             type="email"
@@ -197,9 +197,10 @@ const SignIn = () => {
             placeholder="name@company.com"
             required
             disabled={isLoading}
+            className="py-3 text-xs"
             leftIcon={
               <svg
-                className="size-5"
+                className="size-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -223,9 +224,10 @@ const SignIn = () => {
               placeholder="Nhập mật khẩu…"
               required
               disabled={isLoading}
+              className="py-3 text-xs"
               leftIcon={
                 <svg
-                  className="size-5"
+                  className="size-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -246,7 +248,7 @@ const SignIn = () => {
                 >
                   {showPassword ? (
                     <svg
-                      className="size-5"
+                      className="size-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -260,7 +262,7 @@ const SignIn = () => {
                     </svg>
                   ) : (
                     <svg
-                      className="size-5"
+                      className="size-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -285,15 +287,15 @@ const SignIn = () => {
           </div>
 
           {error && !needs2FA && !needsPIN && (
-            <div className="text-error text-xs font-black bg-error/10 p-4 rounded-2xl border border-error/20 animate-shake">
+            <div className="text-error text-[10px] font-black bg-error/10 p-3 rounded-xl border border-error/20 animate-shake">
               {error}
             </div>
           )}
 
           <Button
             type="submit"
-            className="w-full py-4 text-base font-black tracking-tight"
-            size="lg"
+            className="w-full py-3.5 text-sm font-black tracking-tight"
+            size="md"
             variant="primary"
             isLoading={isLoading}
           >
@@ -301,14 +303,14 @@ const SignIn = () => {
           </Button>
         </form>
 
-        <div className="mt-10 pt-8 border-t border-border/50 flex flex-col items-center">
-          <p className="text-sm text-text-secondary font-medium">
+        <div className="mt-8 pt-6 border-t border-border/50 flex flex-col items-center">
+          <p className="text-xs text-text-secondary font-medium">
             Chưa có tài khoản?{" "}
             <Link
               to="/sign-up"
               className="text-primary font-black hover:text-primary-dark transition-colors"
             >
-              Yêu cầu quyền truy cập
+              Đăng ký
             </Link>
           </p>
         </div>
